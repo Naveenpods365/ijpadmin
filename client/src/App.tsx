@@ -9,6 +9,8 @@ import { DashboardScreen } from "@/pages/DashboardScreen";
 import { LoginScreen } from "@/pages/LoginScreen";
 import { PostsDealsScreen } from "@/pages/PostsDealsScreen";
 import { EditPostScreen } from "@/pages/EditPostScreen";
+import { AIIntelligenceCenterScreen } from "@/pages/AIIntelligenceCenterScreen";
+import { ContentModerationScreen } from "@/pages/ContentModerationScreen";
 
 function Router() {
     return (
@@ -17,6 +19,11 @@ function Router() {
             <Route path="/" component={DashboardScreen} />
             <Route path="/posts" component={PostsDealsScreen} />
             <Route path="/posts/edit" component={EditPostScreen} />
+            <Route
+                path="/ai-intelligence"
+                component={AIIntelligenceCenterScreen}
+            />
+            <Route path="/moderation" component={ContentModerationScreen} />
             <Route path="/login" component={LoginScreen} />
             {/* Fallback to 404 */}
             <Route component={NotFound} />

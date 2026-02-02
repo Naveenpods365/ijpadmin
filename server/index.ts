@@ -13,6 +13,8 @@ const __dirname = dirname(__filename);
 const app = express();
 const server = createServer(app);
 
+const isProd = process.env.NODE_ENV === "production";
+
 // Simple in-memory user store for development
 const users: any[] = [{ id: "1", username: "admin", password: "admin" }];
 
@@ -68,50 +70,90 @@ passport.deserializeUser(async (id: string, done) => {
 
 // Middleware
 app.use(express.json());
-app.use(express.static(join(__dirname, "../dist/public")));
 
-// Routes
-app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.json(req.user);
-});
-
-app.post("/api/logout", (req, res) => {
-    req.logout(() => {
-        res.json({ message: "Logged out" });
-    });
-});
-
-app.get("/api/user", (req, res) => {
-    if (req.isAuthenticated()) {
-        res.json(req.user);
+async function init() {
+    if (isProd) {
+        app.use(express.static(join(__dirname, "../dist/public")));
     } else {
-        res.status(401).json({ message: "Not authenticated" });
+        const { createServer: createViteServer } = await import("vite");
+        const { readFile } = await import("node:fs/promises");
+
+        const vite = await createViteServer({
+            server: { middlewareMode: true },
+            appType: "custom",
+        });
+
+        app.use(vite.middlewares);
+
+        app.get("*", async (req, res, next) => {
+            try {
+                if (req.originalUrl.startsWith("/api/")) return next();
+
+                const url = req.originalUrl;
+                const templatePath = join(__dirname, "../client/index.html");
+                const rawTemplate = await readFile(templatePath, "utf-8");
+                const html = await vite.transformIndexHtml(url, rawTemplate);
+                res.status(200).set({ "Content-Type": "text/html" }).end(html);
+            } catch (e) {
+                vite.ssrFixStacktrace(e as Error);
+                next(e);
+            }
+        });
     }
-});
 
-app.post("/api/register", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const existingUser = users.find((u) => u.username === username);
+    // Routes
+    app.post("/api/login", passport.authenticate("local"), (req, res) => {
+        res.json(req.user);
+    });
 
-        if (existingUser) {
-            return res.status(400).json({ message: "Username already exists" });
+    app.post("/api/logout", (req, res) => {
+        req.logout(() => {
+            res.json({ message: "Logged out" });
+        });
+    });
+
+    app.get("/api/user", (req, res) => {
+        if (req.isAuthenticated()) {
+            res.json(req.user);
+        } else {
+            res.status(401).json({ message: "Not authenticated" });
         }
+    });
 
-        const newUser = { id: String(users.length + 1), username, password };
-        users.push(newUser);
-        res.json(newUser);
-    } catch (error) {
-        res.status(500).json({ message: "Registration failed" });
+    app.post("/api/register", async (req, res) => {
+        try {
+            const { username, password } = req.body;
+            const existingUser = users.find((u) => u.username === username);
+
+            if (existingUser) {
+                return res
+                    .status(400)
+                    .json({ message: "Username already exists" });
+            }
+
+            const newUser = {
+                id: String(users.length + 1),
+                username,
+                password,
+            };
+            users.push(newUser);
+            res.json(newUser);
+        } catch (error) {
+            res.status(500).json({ message: "Registration failed" });
+        }
+    });
+
+    if (isProd) {
+        // Serve React app for all other routes
+        app.get("*", (req, res) => {
+            res.sendFile(join(__dirname, "../dist/public/index.html"));
+        });
     }
-});
 
-// Serve React app for all other routes
-app.get("*", (req, res) => {
-    res.sendFile(join(__dirname, "../dist/public/index.html"));
-});
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+init();
