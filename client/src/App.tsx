@@ -16,6 +16,7 @@ import { FinancePlansScreen } from "@/pages/FinancePlansScreen";
 import { ReportsScreen } from "@/pages/ReportsScreen";
 import { SystemAlertsScreen } from "@/pages/SystemAlertsScreen";
 import { UsersScreen } from "@/pages/UsersScreen";
+import { UserProfileViewScreen } from "@/pages/UserProfileViewScreen";
 import { CommentsScreen } from "@/pages/CommentsScreen";
 import { PricingSettingsScreen } from "@/pages/PricingSettingsScreen";
 import { AdminManagementScreen } from "@/pages/AdminManagementScreen";
@@ -37,6 +38,7 @@ function Router() {
             <Route path="/finance" component={FinancePlansScreen} />
             <Route path="/reports" component={ReportsScreen} />
             <Route path="/alerts" component={SystemAlertsScreen} />
+            <Route path="/users/:id" component={UserProfileViewScreen} />
             <Route path="/users" component={UsersScreen} />
             <Route path="/comments" component={CommentsScreen} />
             <Route path="/pricing" component={PricingSettingsScreen} />

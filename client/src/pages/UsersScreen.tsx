@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import {
     Bell,
     ChevronDown,
@@ -142,10 +143,7 @@ const activityStyles: Record<
     Low: { bg: "bg-[#f3f4f6]", text: "text-[#6b7280]" },
 };
 
-const statusStyles: Record<
-    UserRow["status"],
-    { bg: string; text: string }
-> = {
+const statusStyles: Record<UserRow["status"], { bg: string; text: string }> = {
     Active: { bg: "bg-[#eaf7ef]", text: "text-[#16a249]" },
     Inactive: { bg: "bg-[#f3f4f6]", text: "text-[#6b7280]" },
     Suspended: { bg: "bg-[#fee2e2]", text: "text-[#ef4444]" },
@@ -181,10 +179,10 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 
 export function UsersScreen() {
     const [search, setSearch] = useState("");
-    const [activeTab, setActiveTab] = useState<(typeof filterTabs)[number]>(
-        "All User",
-    );
+    const [activeTab, setActiveTab] =
+        useState<(typeof filterTabs)[number]>("All User");
     const [page, setPage] = useState(2);
+    const [, setLocation] = useLocation();
 
     const users = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -221,7 +219,9 @@ export function UsersScreen() {
                                         variant="outline"
                                         className="h-10 w-10 p-0 rounded-[6px] bg-white border border-[#edf1f3]"
                                     >
-                                        <span className="sr-only">Open menu</span>
+                                        <span className="sr-only">
+                                            Open menu
+                                        </span>
                                         <svg
                                             viewBox="0 0 24 24"
                                             className="h-5 w-5 text-[#7b848f]"
@@ -231,9 +231,24 @@ export function UsersScreen() {
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                         >
-                                            <line x1="3" y1="12" x2="21" y2="12" />
-                                            <line x1="3" y1="6" x2="21" y2="6" />
-                                            <line x1="3" y1="18" x2="21" y2="18" />
+                                            <line
+                                                x1="3"
+                                                y1="12"
+                                                x2="21"
+                                                y2="12"
+                                            />
+                                            <line
+                                                x1="3"
+                                                y1="6"
+                                                x2="21"
+                                                y2="6"
+                                            />
+                                            <line
+                                                x1="3"
+                                                y1="18"
+                                                x2="21"
+                                                y2="18"
+                                            />
                                         </svg>
                                     </Button>
                                 </SheetTrigger>
@@ -241,7 +256,10 @@ export function UsersScreen() {
                                     side="left"
                                     className="p-0 bg-transparent border-0"
                                 >
-                                    <Sidebar className="w-[280px]" variant="drawer" />
+                                    <Sidebar
+                                        className="w-[280px]"
+                                        variant="drawer"
+                                    />
                                 </SheetContent>
                             </Sheet>
                         </div>
@@ -330,7 +348,8 @@ export function UsersScreen() {
                                                 >
                                                     <span
                                                         className={`h-2 w-2 rounded-full ${
-                                                            alert.tone === "critical"
+                                                            alert.tone ===
+                                                            "critical"
                                                                 ? "bg-[#ef4444]"
                                                                 : "bg-[#f59f0a]"
                                                         }`}
@@ -367,7 +386,10 @@ export function UsersScreen() {
                                     </div>
                                 </div>
                                 <div className="mt-4 h-[220px]">
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height="100%"
+                                    >
                                         <LineChart data={activityData}>
                                             <CartesianGrid
                                                 stroke="#d5dee7"
@@ -378,15 +400,25 @@ export function UsersScreen() {
                                                 dataKey="day"
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: "#9aa3af", fontSize: 10 }}
+                                                tick={{
+                                                    fill: "#9aa3af",
+                                                    fontSize: 10,
+                                                }}
                                             />
                                             <YAxis
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: "#9aa3af", fontSize: 10 }}
-                                                tickFormatter={(value) => `${value}k`}
+                                                tick={{
+                                                    fill: "#9aa3af",
+                                                    fontSize: 10,
+                                                }}
+                                                tickFormatter={(value) =>
+                                                    `${value}k`
+                                                }
                                             />
-                                            <Tooltip content={<ChartTooltip />} />
+                                            <Tooltip
+                                                content={<ChartTooltip />}
+                                            />
                                             <Line
                                                 type="monotone"
                                                 dataKey="value"
@@ -419,7 +451,9 @@ export function UsersScreen() {
                                             <button
                                                 key={tab}
                                                 type="button"
-                                                onClick={() => setActiveTab(tab)}
+                                                onClick={() =>
+                                                    setActiveTab(tab)
+                                                }
                                                 className={`h-8 px-4 rounded-[6px] text-[11px] font-medium ${
                                                     isActive
                                                         ? "bg-[#62a230] text-white"
@@ -435,7 +469,9 @@ export function UsersScreen() {
                                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa3af]" />
                                     <input
                                         value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
                                         placeholder="Search by name, mobile, or city..."
                                         className="h-9 w-full rounded-[6px] border border-[#edf1f3] bg-white pl-9 pr-3 text-[11px] text-[#7b848f] [font-family:'Poppins',Helvetica] focus:outline-none focus:ring-2 focus:ring-[#eaf7ef]"
                                     />
@@ -479,18 +515,25 @@ export function UsersScreen() {
                                     </thead>
                                     <tbody>
                                         {users.map((user) => {
-                                            const activity = activityStyles[user.activity];
-                                            const status = statusStyles[user.status];
+                                            const activity =
+                                                activityStyles[user.activity];
+                                            const status =
+                                                statusStyles[user.status];
                                             return (
                                                 <tr
                                                     key={user.id}
-                                                    className="border-b border-[#f0f2f4]"
+                                                    className="border-b border-[#f0f2f4] cursor-pointer hover:bg-[#f6f8fa]"
+                                                    onClick={() => {
+                                                        setLocation(
+                                                            `/users/${user.id}`,
+                                                        );
+                                                    }}
                                                 >
                                                     <td className="px-4 py-3">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full overflow-hidden bg-[#f6f8fa] border border-[#edf1f3]">
                                                                 <img
-                                                                    src="/figmaAssets/2-jpg.png"
+                                                                    src="/figmaAssets/ellipse-11.svg"
                                                                     alt="avatar"
                                                                     className="w-full h-full object-cover"
                                                                 />
@@ -519,7 +562,8 @@ export function UsersScreen() {
                                                     <td className="px-4 py-3">
                                                         <span
                                                             className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${
-                                                                user.reports === "None"
+                                                                user.reports ===
+                                                                "None"
                                                                     ? "bg-[#f3f4f6] text-[#9aa3af]"
                                                                     : "bg-[#fee2e2] text-[#ef4444]"
                                                             }`}
@@ -539,7 +583,8 @@ export function UsersScreen() {
                                                             <div className="flex-1 h-2 rounded-full bg-[#eef2f6] overflow-hidden">
                                                                 <div
                                                                     className={`h-full rounded-full ${
-                                                                        user.profile > 40
+                                                                        user.profile >
+                                                                        40
                                                                             ? "bg-[#4f8ef9]"
                                                                             : "bg-[#fb923c]"
                                                                     }`}
@@ -556,6 +601,9 @@ export function UsersScreen() {
                                                     <td className="px-4 py-3 text-right">
                                                         <button
                                                             type="button"
+                                                            onClick={(event) =>
+                                                                event.stopPropagation()
+                                                            }
                                                             className="h-8 w-8 rounded-[6px] border border-transparent hover:bg-[#f6f8fa] inline-flex items-center justify-center"
                                                         >
                                                             <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
@@ -573,10 +621,14 @@ export function UsersScreen() {
                                 <div className="flex items-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setPage(Math.max(1, page - 1))}
+                                        onClick={() =>
+                                            setPage(Math.max(1, page - 1))
+                                        }
                                         className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
                                     >
-                                        <span className="text-[#7b848f]">‹</span>
+                                        <span className="text-[#7b848f]">
+                                            ‹
+                                        </span>
                                     </button>
                                     {[1, 2, 3, 4, 5].map((p) => (
                                         <button
@@ -594,10 +646,14 @@ export function UsersScreen() {
                                     ))}
                                     <button
                                         type="button"
-                                        onClick={() => setPage(Math.min(5, page + 1))}
+                                        onClick={() =>
+                                            setPage(Math.min(5, page + 1))
+                                        }
                                         className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
                                     >
-                                        <span className="text-[#7b848f]">›</span>
+                                        <span className="text-[#7b848f]">
+                                            ›
+                                        </span>
                                     </button>
                                 </div>
                             </div>

@@ -401,7 +401,7 @@ export function ProfileScreen() {
 
                             {activeTab === "Change Password" ? (
                                 <div className="p-6">
-                                    <div className="max-w-[360px] mx-auto flex flex-col gap-6 align-items-center " >
+                                    <div className="max-w-[360px] mx-auto flex flex-col gap-6 align-items-center ">
                                         {passwordStep === "form" ? (
                                             <>
                                                 <div className="text-[26px] font-regular text-[#222f36] text-left [font-family:'Poppins',Helvetica]">
