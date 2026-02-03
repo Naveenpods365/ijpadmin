@@ -12,6 +12,7 @@ import {
     Users,
     MessageCircle,
     Settings,
+    UserCog,
     User,
     LogOut,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const mainMenuItems: MenuItem[] = [
     { title: "Users", url: "/users", icon: Users },
     { title: "Comments", url: "/comments", icon: MessageCircle },
     { title: "Pricing Settings", url: "/pricing", icon: Settings },
+    { title: "Admin Management", url: "/admin-management", icon: UserCog },
 ];
 
 const otherMenuItems: MenuItem[] = [
@@ -132,6 +134,9 @@ export function Sidebar({
                                     <span className="text-[14px] font-medium">
                                         {item.title}
                                     </span>
+                                    {item.title === "Comments" ? (
+                                        <span className="ml-auto h-2 w-2 rounded-full bg-[#ef4444]" />
+                                    ) : null}
                                 </Link>
                             );
                         })}
@@ -143,18 +148,33 @@ export function Sidebar({
                         Others
                     </p>
                     <nav className="space-y-1">
-                        {otherMenuItems.map((item) => (
-                            <Link
-                                key={item.title}
-                                href={item.url}
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-200 group"
-                            >
-                                <item.icon className="w-5 h-5 text-white/40 group-hover:text-white" />
-                                <span className="text-[14px] font-medium">
-                                    {item.title}
-                                </span>
-                            </Link>
-                        ))}
+                        {otherMenuItems.map((item) => {
+                            const isActive = location === item.url;
+                            return (
+                                <Link
+                                    key={item.title}
+                                    href={item.url}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                                        isActive
+                                            ? "bg-[#62a230] text-white font-medium"
+                                            : "text-white/60 hover:text-white hover:bg-white/5",
+                                    )}
+                                >
+                                    <item.icon
+                                        className={cn(
+                                            "w-5 h-5",
+                                            isActive
+                                                ? "text-white"
+                                                : "text-white/40 group-hover:text-white",
+                                        )}
+                                    />
+                                    <span className="text-[14px] font-medium">
+                                        {item.title}
+                                    </span>
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
             </div>
