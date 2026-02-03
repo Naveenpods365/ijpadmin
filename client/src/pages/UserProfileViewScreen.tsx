@@ -46,6 +46,121 @@ type FollowRow = {
     isFollowing: boolean;
 };
 
+function BlockConfirmModal({
+    open,
+    name,
+    avatar,
+    onClose,
+    onConfirm,
+}: {
+    open: boolean;
+    name: string;
+    avatar: string;
+    onClose: () => void;
+    onConfirm: () => void;
+}) {
+    useEffect(() => {
+        if (!open) return;
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [open, onClose]);
+
+    return (
+        <AnimatePresence>
+            {open ? (
+                <motion.div
+                    className="fixed inset-0 z-[170]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                >
+                    <div
+                        className="absolute inset-0 bg-black/25"
+                        onClick={onClose}
+                    />
+
+                    <motion.div
+                        className="absolute inset-0 flex items-center justify-center px-4"
+                        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                        transition={{
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 22,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="w-full max-w-[720px] rounded-[14px] bg-white shadow-[0px_18px_45px_rgba(0,0,0,0.18)] border border-[#eef2f6] relative">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="absolute right-4 top-4 h-9 w-9 rounded-full hover:bg-[#f6f8fa] flex items-center justify-center"
+                                aria-label="Close"
+                            >
+                                <X className="h-4 w-4 text-[#222f36]" />
+                            </button>
+
+                            <div className="px-8 pt-8 pb-7">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="h-[106px] w-[106px] rounded-full overflow-hidden bg-[#f6f8fa] border border-[#eef2f6]">
+                                        <img
+                                            src={avatar}
+                                            alt={name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="mt-2 text-[18px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
+                                        {name}
+                                    </div>
+
+                                    <div className="mt-4 text-[19px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
+                                        Are you sure you want to block this post
+                                        User ?
+                                    </div>
+                                    <div className="mt-2 text-[11px] leading-5 text-[#7b848f] [font-family:'Poppins',Helvetica] max-w-[420px]">
+                                        Lorem ipsum dolor sit amet consectetur.
+                                        In tincidunt a pellentesque gravida
+                                        pellentesque suspendisse interdum.
+                                        Placerat risus non id auctor. Non tortor
+                                        quis pretium placerat vestibulum
+                                        convallis.
+                                    </div>
+
+                                    <div className="mt-6 flex items-center justify-center gap-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onConfirm();
+                                                onClose();
+                                            }}
+                                            className="h-9 w-[120px] rounded-[8px] bg-[#62a230] text-white text-[12px] font-semibold [font-family:'Poppins',Helvetica]"
+                                        >
+                                            Yes
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={onClose}
+                                            className="h-9 w-[120px] rounded-[8px] bg-[#f3f4f6] text-[#111827] text-[12px] font-semibold [font-family:'Poppins',Helvetica]"
+                                        >
+                                            No
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            ) : null}
+        </AnimatePresence>
+    );
+}
+
 function FollowListDrawer({
     open,
     title,
@@ -177,6 +292,7 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
     const [followDrawer, setFollowDrawer] = useState<
         null | "followers" | "following"
     >(null);
+    const [blockModalOpen, setBlockModalOpen] = useState(false);
 
     const profileName = useMemo(() => {
         const id = params?.id ?? "";
@@ -315,8 +431,19 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
         return galleryImages;
     }, [tab]);
 
+    const avatarSrc = "/figmaAssets/ellipse-11.svg";
+
     return (
         <div className="min-h-screen bg-[#f3f5f6]">
+            <BlockConfirmModal
+                open={blockModalOpen}
+                name={profileName}
+                avatar={avatarSrc}
+                onClose={() => setBlockModalOpen(false)}
+                onConfirm={() => {
+                    return;
+                }}
+            />
             <FollowListDrawer
                 open={followDrawer === "followers"}
                 title="Followers"
@@ -423,9 +550,14 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                                             align="end"
                                             className="w-60 rounded-[12px] z-[99999]"
                                         >
-                                            <DropdownMenuItem className="cursor-pointer flex items-center gap-2 [font-family:'Poppins',Helvetica]">
+                                            <DropdownMenuItem
+                                                className="cursor-pointer flex items-center gap-2 [font-family:'Poppins',Helvetica]"
+                                                onSelect={() =>
+                                                    setBlockModalOpen(true)
+                                                }
+                                            >
                                                 <UserX className="h-4 w-4 text-[#7b848f]" />
-                                                Block Account Temporary
+                                                Block
                                             </DropdownMenuItem>
                                             <DropdownMenuItem className="cursor-pointer flex items-center gap-2 [font-family:'Poppins',Helvetica]">
                                                 <UserMinus className="h-4 w-4 text-[#7b848f]" />
