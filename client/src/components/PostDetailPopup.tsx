@@ -780,7 +780,7 @@ export function PostDetailPopup({
                                 exit={{ opacity: 0 }}
                             >
                                 <div
-                                    className="absolute inset-0"
+                                    className="absolute inset-0 bg-black/35"
                                     onClick={() => setReviewsOpen(false)}
                                 />
                                 <motion.div
