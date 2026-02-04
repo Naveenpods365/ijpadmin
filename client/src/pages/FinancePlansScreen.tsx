@@ -4,6 +4,8 @@ import {
     DollarSign,
     Download,
     MoreHorizontal,
+    Printer,
+    X,
     TrendingDown,
     TrendingUp,
 } from "lucide-react";
@@ -182,6 +184,20 @@ const transactionsSeed: Txn[] = [
 export function FinancePlansScreen() {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(2);
+    const [selectedTxn, setSelectedTxn] = useState<Txn | null>(null);
+    const [receiptOpen, setReceiptOpen] = useState(false);
+    const [receiptActive, setReceiptActive] = useState(false);
+    const [editPlanOpen, setEditPlanOpen] = useState(false);
+    const [editPlanActive, setEditPlanActive] = useState(false);
+    const [planName, setPlanName] = useState("Pro Plan");
+    const [planPrice, setPlanPrice] = useState("$150/mth");
+    const [planFeatures, setPlanFeatures] = useState([
+        "Feature 1",
+        "Feature 2",
+        "Feature 3",
+        "Feature 4",
+        "Feature 5",
+    ]);
 
     const transactions = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -218,6 +234,46 @@ export function FinancePlansScreen() {
         );
     };
 
+    const receiptDetails = {
+        name: "Akhil Bhatt",
+        handle: "@Akhil Bhatt50",
+        status: "Completed",
+        amount: "$300",
+        description: "This is the receipt for a payment of $4000 (USD).",
+        paymentMethod: "Google pay",
+        paymentDate: "10 December, 2021 - 03:45 pm",
+        item: "Product posting",
+        itemDesc: "In semper pharetra eget porta odio imperdiet turpis facilisis co",
+        qty: "1",
+        total: "$4000",
+    };
+
+    const openReceipt = (txn: Txn) => {
+        setSelectedTxn(txn);
+        setReceiptOpen(true);
+        requestAnimationFrame(() => setReceiptActive(true));
+    };
+
+    const closeReceipt = () => {
+        setReceiptActive(false);
+        setTimeout(() => {
+            setReceiptOpen(false);
+            setSelectedTxn(null);
+        }, 200);
+    };
+
+    const openEditPlan = () => {
+        setEditPlanOpen(true);
+        requestAnimationFrame(() => setEditPlanActive(true));
+    };
+
+    const closeEditPlan = () => {
+        setEditPlanActive(false);
+        setTimeout(() => {
+            setEditPlanOpen(false);
+        }, 200);
+    };
+
     return (
         <div className="min-h-screen bg-[#f3f5f6]">
             <div className="hidden lg:block fixed inset-y-0 left-0 w-[312px] z-40">
@@ -234,7 +290,9 @@ export function FinancePlansScreen() {
                                         variant="outline"
                                         className="h-10 w-10 p-0 rounded-xl bg-white border border-[#edf1f3]"
                                     >
-                                        <span className="sr-only">Open menu</span>
+                                        <span className="sr-only">
+                                            Open menu
+                                        </span>
                                         <svg
                                             viewBox="0 0 24 24"
                                             className="h-5 w-5 text-[#7b848f]"
@@ -244,9 +302,24 @@ export function FinancePlansScreen() {
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                         >
-                                            <line x1="3" y1="12" x2="21" y2="12" />
-                                            <line x1="3" y1="6" x2="21" y2="6" />
-                                            <line x1="3" y1="18" x2="21" y2="18" />
+                                            <line
+                                                x1="3"
+                                                y1="12"
+                                                x2="21"
+                                                y2="12"
+                                            />
+                                            <line
+                                                x1="3"
+                                                y1="6"
+                                                x2="21"
+                                                y2="6"
+                                            />
+                                            <line
+                                                x1="3"
+                                                y1="18"
+                                                x2="21"
+                                                y2="18"
+                                            />
                                         </svg>
                                     </Button>
                                 </SheetTrigger>
@@ -254,7 +327,10 @@ export function FinancePlansScreen() {
                                     side="left"
                                     className="p-0 bg-transparent border-0"
                                 >
-                                    <Sidebar className="w-[280px]" variant="drawer" />
+                                    <Sidebar
+                                        className="w-[280px]"
+                                        variant="drawer"
+                                    />
                                 </SheetContent>
                             </Sheet>
                         </div>
@@ -308,40 +384,98 @@ export function FinancePlansScreen() {
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <div className="h-[210px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={revenueData} margin={{ left: 6, right: 10 }}>
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height="100%"
+                                    >
+                                        <AreaChart
+                                            data={revenueData}
+                                            margin={{ left: 6, right: 10 }}
+                                        >
                                             <defs>
-                                                <linearGradient id="subFill" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.25} />
-                                                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0.0} />
+                                                <linearGradient
+                                                    id="subFill"
+                                                    x1="0"
+                                                    y1="0"
+                                                    x2="0"
+                                                    y2="1"
+                                                >
+                                                    <stop
+                                                        offset="0%"
+                                                        stopColor="#22c55e"
+                                                        stopOpacity={0.25}
+                                                    />
+                                                    <stop
+                                                        offset="100%"
+                                                        stopColor="#22c55e"
+                                                        stopOpacity={0.0}
+                                                    />
                                                 </linearGradient>
-                                                <linearGradient id="adsFill" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.18} />
-                                                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.0} />
+                                                <linearGradient
+                                                    id="adsFill"
+                                                    x1="0"
+                                                    y1="0"
+                                                    x2="0"
+                                                    y2="1"
+                                                >
+                                                    <stop
+                                                        offset="0%"
+                                                        stopColor="#38bdf8"
+                                                        stopOpacity={0.18}
+                                                    />
+                                                    <stop
+                                                        offset="100%"
+                                                        stopColor="#38bdf8"
+                                                        stopOpacity={0.0}
+                                                    />
                                                 </linearGradient>
-                                                <linearGradient id="feesFill" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#f97316" stopOpacity={0.14} />
-                                                    <stop offset="100%" stopColor="#f97316" stopOpacity={0.0} />
+                                                <linearGradient
+                                                    id="feesFill"
+                                                    x1="0"
+                                                    y1="0"
+                                                    x2="0"
+                                                    y2="1"
+                                                >
+                                                    <stop
+                                                        offset="0%"
+                                                        stopColor="#f97316"
+                                                        stopOpacity={0.14}
+                                                    />
+                                                    <stop
+                                                        offset="100%"
+                                                        stopColor="#f97316"
+                                                        stopOpacity={0.0}
+                                                    />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid stroke="#eef2f1" vertical={false} />
+                                            <CartesianGrid
+                                                stroke="#eef2f1"
+                                                vertical={false}
+                                            />
                                             <XAxis
                                                 dataKey="month"
                                                 tickLine={false}
                                                 axisLine={false}
-                                                tick={{ fill: "#7b848f", fontSize: 11 }}
+                                                tick={{
+                                                    fill: "#7b848f",
+                                                    fontSize: 11,
+                                                }}
                                             />
                                             <YAxis
                                                 tickLine={false}
                                                 axisLine={false}
-                                                tick={{ fill: "#7b848f", fontSize: 11 }}
+                                                tick={{
+                                                    fill: "#7b848f",
+                                                    fontSize: 11,
+                                                }}
                                                 width={30}
                                             />
                                             <Tooltip
                                                 contentStyle={{
                                                     borderRadius: 12,
                                                     border: "1px solid #edf1f3",
-                                                    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                                                    boxShadow:
+                                                        "0 10px 30px rgba(0,0,0,0.08)",
                                                 }}
                                             />
                                             <Area
@@ -438,8 +572,14 @@ export function FinancePlansScreen() {
                                             <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-44">
-                                        <DropdownMenuItem className="cursor-pointer">
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-44"
+                                    >
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onSelect={openEditPlan}
+                                        >
                                             Edit Plan
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="cursor-pointer">
@@ -489,12 +629,30 @@ export function FinancePlansScreen() {
                                         Billed annually.
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    className="h-9 w-9 rounded-[10px] bg-white/70 border border-white/70 flex items-center justify-center"
-                                >
-                                    <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
-                                </button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="h-9 w-9 rounded-[10px] bg-white/70 border border-white/70 flex items-center justify-center"
+                                        >
+                                            <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-44"
+                                    >
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onSelect={openEditPlan}
+                                        >
+                                            Edit Plan
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer">
+                                            Delete plan
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             <div className="mt-6 text-[28px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
                                 $150/mth
@@ -537,12 +695,30 @@ export function FinancePlansScreen() {
                                         TELLUS Family Plan
                                     </div>
                                 </div>
-                                <button
-                                    type="button"
-                                    className="h-9 w-9 rounded-[10px] bg-white/70 border border-white/70 flex items-center justify-center"
-                                >
-                                    <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
-                                </button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="h-9 w-9 rounded-[10px] bg-white/70 border border-white/70 flex items-center justify-center"
+                                        >
+                                            <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        className="w-44"
+                                    >
+                                        <DropdownMenuItem
+                                            className="cursor-pointer"
+                                            onSelect={openEditPlan}
+                                        >
+                                            Edit Plan
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer">
+                                            Delete plan
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                             <div className="mt-6 text-[28px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
                                 $150/mth
@@ -628,7 +804,11 @@ export function FinancePlansScreen() {
                                     </TableHeader>
                                     <TableBody>
                                         {transactions.map((t) => (
-                                            <TableRow key={t.id}>
+                                            <TableRow
+                                                key={t.id}
+                                                className="cursor-pointer hover:bg-[#f6f8fa]"
+                                                onClick={() => openReceipt(t)}
+                                            >
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full overflow-hidden bg-[#f6f8fa] border border-[#edf1f3]">
@@ -658,7 +838,9 @@ export function FinancePlansScreen() {
                                                     {t.payment}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <StatusPill status={t.status} />
+                                                    <StatusPill
+                                                        status={t.status}
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="text-[12px] font-semibold text-[#16a249]">
                                                     {t.amount}
@@ -670,6 +852,9 @@ export function FinancePlansScreen() {
                                                     <button
                                                         type="button"
                                                         className="h-8 w-8 rounded-[10px] hover:bg-[#f6f8fa] inline-flex items-center justify-center"
+                                                        onClick={(event) =>
+                                                            event.stopPropagation()
+                                                        }
                                                     >
                                                         <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
                                                     </button>
@@ -685,10 +870,14 @@ export function FinancePlansScreen() {
                                 <div className="flex items-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => setPage(Math.max(1, page - 1))}
+                                        onClick={() =>
+                                            setPage(Math.max(1, page - 1))
+                                        }
                                         className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
                                     >
-                                        <span className="text-[#7b848f]">‹</span>
+                                        <span className="text-[#7b848f]">
+                                            ‹
+                                        </span>
                                     </button>
                                     {[1, 2, 3, 4, 5].map((p) => (
                                         <button
@@ -706,10 +895,14 @@ export function FinancePlansScreen() {
                                     ))}
                                     <button
                                         type="button"
-                                        onClick={() => setPage(Math.min(5, page + 1))}
+                                        onClick={() =>
+                                            setPage(Math.min(5, page + 1))
+                                        }
                                         className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
                                     >
-                                        <span className="text-[#7b848f]">›</span>
+                                        <span className="text-[#7b848f]">
+                                            ›
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -717,6 +910,232 @@ export function FinancePlansScreen() {
                     </Card>
                 </div>
             </main>
+            {receiptOpen ? (
+                <div className="fixed inset-0 z-[120] flex items-center justify-end">
+                    <div
+                        className={`absolute inset-0 bg-black/30 transition-opacity duration-200 ${
+                            receiptActive ? "opacity-100" : "opacity-0"
+                        }`}
+                        onClick={closeReceipt}
+                    />
+                    <div
+                        className={`relative h-full w-[880px] max-w-[90vw] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.2)] transition-transform duration-200 ${
+                            receiptActive ? "translate-x-0" : "translate-x-full"
+                        }`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="h-full flex flex-col">
+                            <div className="h-[70px] px-6 flex items-center justify-between border-b border-[#edf1f3]">
+                                <div className="text-[18px] font-semibold text-[#222f36]">
+                                    Receipt
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={closeReceipt}
+                                    className="h-9 w-9 rounded-full hover:bg-[#f6f8fa] flex items-center justify-center"
+                                >
+                                    <X className="h-4 w-4 text-[#7b848f]" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto px-6 py-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <img
+                                            src="/figmaAssets/2-jpg.png"
+                                            alt="user"
+                                            className="h-12 w-12 rounded-full object-cover"
+                                        />
+                                        <div>
+                                            <div className="text-[16px] font-semibold text-[#222f36]">
+                                                {receiptDetails.name}
+                                            </div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                {receiptDetails.handle}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-7">
+                                        <div>
+                                            <div className="text-[11px] text-[#7b848f]">
+                                                Status
+                                            </div>
+                                            <span className="inline-flex items-center h-6 px-3 rounded-full bg-[#eaf7ef] text-[#16a249] text-[11px] font-medium">
+                                                {receiptDetails.status}
+                                            </span>
+                                        </div>
+                                        <div className="text-[29px] font-semibold text-[#62a230]">
+                                            {receiptDetails.amount}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between space-x-34 items-center align-center w-[840px]">
+                                    <div className="mt-5 text-[12px] text-[#7b848f]">
+                                        {receiptDetails.description}
+                                    </div>
+
+                                    <div className="mt-4 flex items-center gap-3">
+                                        <Button
+                                            variant="outline"
+                                            className="h-9 rounded-full border-[#e5e7eb] text-[#62a230] bg-[#f3f8ee] hover:bg-[#f3f8ee]"
+                                        >
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Download
+                                        </Button>
+                                        <Button className="h-9 rounded-full bg-[#62a230] text-white">
+                                            <Printer className="h-4 w-4 mr-2" />
+                                            Print Doc
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="mt-6 grid grid-cols-2 gap-4 text-[12px] text-[#7b848f]">
+                                    <div>
+                                        <div>Payment Method</div>
+                                        <div className="mt-1 text-[#222f36] font-medium text-lg">
+                                            {receiptDetails.paymentMethod}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div>Payment date</div>
+                                        <div className="mt-1 text-[#222f36] font-medium text-md">
+                                            {receiptDetails.paymentDate}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 border-t border-[#edf1f3] pt-4">
+                                    <div className="grid grid-cols-[1fr_80px_100px] text-[11px] text-[#9aa3af] bg-[#f3f8ee] p-4 rounded-md">
+                                        <div className="font-medium text-sm">
+                                            Payment for
+                                        </div>
+                                        <div className="text-center">
+                                            QUANITY
+                                        </div>
+                                        <div className="text-right">AMOUNT</div>
+                                    </div>
+                                    <div className="mt-4 grid grid-cols-[1fr_80px_100px] text-[12px] text-[#222f36]">
+                                        <div>
+                                            <div className="font-medium text-sm ">
+                                                {receiptDetails.item}
+                                            </div>
+                                            <div className="mt-1 text-[11px] text-[#7b848f]">
+                                                {receiptDetails.itemDesc}
+                                            </div>
+                                        </div>
+                                        <div className="text-center">
+                                            {receiptDetails.qty}
+                                        </div>
+                                        <div className="text-right">
+                                            {receiptDetails.total}
+                                        </div>
+                                    </div>
+                                    <div className="mt-8 flex items-center justify-end text-[12px] text-[#7b848f]">
+                                        <span className="mr-6">TOTAL DUE</span>
+                                        <span className="text-[#222f36] font-semibold">
+                                            {receiptDetails.total}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+            {editPlanOpen ? (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center">
+                    <div
+                        className={`absolute inset-0 bg-black/30 transition-opacity duration-200 ${
+                            editPlanActive ? "opacity-100" : "opacity-0"
+                        }`}
+                        onClick={closeEditPlan}
+                    />
+                    <div
+                        className={`relative w-[880px] max-w-[95vw] rounded-[20px] bg-white shadow-[0_30px_80px_rgba(0,0,0,0.2)] transition-all duration-200 ${
+                            editPlanActive
+                                ? "opacity-100 scale-100"
+                                : "opacity-0 scale-95"
+                        }`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="px-10 pt-8 pb-9">
+                            <div className="flex items-center justify-between">
+                                <div className="text-[20px] font-semibold text-[#222f36]">
+                                    Edit Plan
+                                </div>
+                                <div className="flex items-center gap-4 text-[12px] text-[#7b848f]">
+                                    <button
+                                        type="button"
+                                        className="h-10 w-10 rounded-full bg-[#62a230] text-white flex items-center justify-center"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={closeEditPlan}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <span className="text-[16px]">←</span>
+                                        Back
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="rounded-[14px] border border-[#edf1f3] p-6">
+                                    <input
+                                        value={planName}
+                                        onChange={(e) =>
+                                            setPlanName(e.target.value)
+                                        }
+                                        placeholder="Plan Name"
+                                        className="h-11 w-full rounded-[10px] border border-[#e5e7eb] bg-white px-4 text-[12px] text-[#7b848f]"
+                                    />
+                                    <input
+                                        value={planPrice}
+                                        onChange={(e) =>
+                                            setPlanPrice(e.target.value)
+                                        }
+                                        placeholder="Price"
+                                        className="mt-4 h-11 w-full rounded-[10px] border border-[#e5e7eb] bg-white px-4 text-[12px] text-[#7b848f]"
+                                    />
+                                </div>
+                                <div className="rounded-[14px] border border-[#edf1f3] p-6">
+                                    <button
+                                        type="button"
+                                        className="h-10 w-10 rounded-full bg-[#62a230] text-white flex items-center justify-center"
+                                    >
+                                        +
+                                    </button>
+                                    <div className="mt-4 space-y-3">
+                                        {planFeatures.map((feature, index) => (
+                                            <input
+                                                key={index}
+                                                value={feature}
+                                                onChange={(e) => {
+                                                    const next = [
+                                                        ...planFeatures,
+                                                    ];
+                                                    next[index] =
+                                                        e.target.value;
+                                                    setPlanFeatures(next);
+                                                }}
+                                                placeholder={`Feature ${index + 1}`}
+                                                className="h-11 w-full rounded-[10px] border border-[#e5e7eb] bg-white px-4 text-[12px] text-[#7b848f]"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex justify-end">
+                                <Button className="h-11 w-[160px] rounded-[10px] bg-[#62a230] text-white">
+                                    Update
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }

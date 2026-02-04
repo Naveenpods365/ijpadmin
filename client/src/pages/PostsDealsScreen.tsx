@@ -5,6 +5,7 @@ import {
     ChevronRight,
     Eye,
     Heart,
+    Image as ImageIcon,
     MessageCircle,
     MoreHorizontal,
     SearchIcon,
@@ -106,6 +107,7 @@ export const PostsDealsScreen = (): JSX.Element => {
     const [insightsPost, setInsightsPost] = useState<PostDetailData | null>(
         null,
     );
+    const [showSponsoredForm, setShowSponsoredForm] = useState(false);
     const totalPages = 5;
 
     const filteredPosts = useMemo(() => {
@@ -147,600 +149,895 @@ export const PostsDealsScreen = (): JSX.Element => {
                         <div className="w-10" />
                     </div>
 
-                    <DashboardHeader
-                        title="Posts & Deals"
-                        description="Manage all user created posts and deals"
-                        onSearch={() => {}}
-                    />
+                    {!showSponsoredForm && (
+                        <DashboardHeader
+                            title="Posts & Deals"
+                            description="Manage all user created posts and deals"
+                            onSearch={() => {}}
+                        />
+                    )}
 
-                    <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
-                                Filters
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                                <div className="relative">
-                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7b848f] opacity-60" />
-                                    <Input
-                                        placeholder="Search posts..."
-                                        className="h-10 rounded-[10px] bg-white border border-[#edf1f3] pl-9 text-sm"
-                                    />
-                                </div>
-
-                                <Select defaultValue="All">
-                                    <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
-                                        <SelectValue placeholder="All Types" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="All">
-                                            All Types
-                                        </SelectItem>
-                                        <SelectItem value="Regular">
-                                            Regular
-                                        </SelectItem>
-                                        <SelectItem value="Sponsored">
-                                            Sponsored
-                                        </SelectItem>
-                                        <SelectItem value="Group Buy">
-                                            Group Buy
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Select defaultValue="Category">
-                                    <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
-                                        <SelectValue placeholder="Category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Category">
-                                            Category
-                                        </SelectItem>
-                                        <SelectItem value="Electronics">
-                                            Electronics
-                                        </SelectItem>
-                                        <SelectItem value="Fashion">
-                                            Fashion
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Select defaultValue="Region">
-                                    <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
-                                        <SelectValue placeholder="Region/City" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Region">
-                                            Region/City
-                                        </SelectItem>
-                                        <SelectItem value="New York">
-                                            New York
-                                        </SelectItem>
-                                        <SelectItem value="Bengaluru">
-                                            Bengaluru
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Button
-                                    variant="outline"
-                                    className="h-10 rounded-[10px] bg-white border border-[#edf1f3] justify-between text-[#7b848f] font-normal"
+                    {showSponsoredForm ? (
+                        <div className="w-[120vh] mt-36 ml-24">
+                            <div
+                                className="flex items-center gap-3 text-[#222f36] cursor-pointer"
+                                onClick={() => setShowSponsoredForm(false)}
+                            >
+                                <button
+                                    type="button"
+                                    className="h-8 w-8 flex items-center justify-center text-[#7b848f] hover:text-[#222f36]"
                                 >
-                                    Date Range
-                                    <CalendarIcon className="h-4 w-4" />
-                                </Button>
+                                    <ChevronLeft className="h-5 w-5" />
+                                </button>
+                                <div className="text-[20px] font-semibold [font-family:'Poppins',Helvetica]">
+                                    Create Sponsored post
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
 
-                    <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
-                                Engagement Analytics
-                            </CardTitle>
-                            <p className="text-[#7b848f] text-xs">
-                                How your audience interacts with contents
-                            </p>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 ">
-                                    {engagementStats.map((s) => (
-                                        <div
-                                            key={s.title}
-                                            className="rounded-[12px] bg-[#F6F6F6] border border-[#F6F6F6] p-4"
-                                        >
-                                            <div className="flex items-center justify-center">
-                                                <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                                                    {s.icon === "heart" ? (
-                                                        <Heart className="h-7 w-7 text-[#62a230]" />
-                                                    ) : null}
-                                                    {s.icon === "comment" ? (
-                                                        <MessageCircle className="h-7 w-7 text-[#62a230]" />
-                                                    ) : null}
-                                                    {s.icon === "share" ? (
-                                                        <Share2 className="h-7 w-7 text-[#62a230]" />
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="mt-3 text-center text-[#222f36] text-[18px] font-bold">
-                                                {s.value}
-                                            </div>
-                                            <div className="mt-1 text-center text-[#7b848f] text-[10px]">
-                                                {s.title}
-                                            </div>
-                                            <div className="mt-2 text-center text-[#62a230] text-[10px]">
-                                                {s.sub}
-                                            </div>
+                            <div className="mt-6 rounded-[18px] bg-[#D9D9D9] p-6 shadow-sm">
+                                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="text-[12px] text-[#7b848f]">
+                                            Upload Product Images
                                         </div>
-                                    ))}
-                                </div>
-
-                                <div className="rounded-[12px] bg-[#F6F6F6] border border-[#edf1f3] p-4">
-                                    <div className="text-[#222f36] text-[12px] font-semibold">
-                                        Post Type Overview
-                                    </div>
-                                    <div className="mt-4 space-y-3">
-                                        {[
-                                            {
-                                                label: "Regular Post",
-                                                value: 88,
-                                                color: "bg-[#62a230]",
-                                            },
-                                            {
-                                                label: "Group Buy",
-                                                value: 20,
-                                                color: "bg-[#6b7280]",
-                                            },
-                                            {
-                                                label: "Sponsored Post",
-                                                value: 4,
-                                                color: "bg-[#ef4343]",
-                                            },
-                                        ].map((row) => (
-                                            <div
-                                                key={row.label}
-                                                className="space-y-2"
-                                            >
-                                                <div className="flex items-center  justify-between text-[11px] text-[#7b848f]">
-                                                    <span>{row.label}</span>
-                                                    <span>{row.value}k</span>
-                                                </div>
-                                                <div className="h-2 rounded-full bg-[#E6E6E6] overflow-hidden">
-                                                    <div
-                                                        className={cn(
-                                                            "h-2 rounded-full",
-                                                            row.color,
-                                                        )}
-                                                        style={{
-                                                            width: `${row.value}%`,
-                                                        }}
-                                                    />
-                                                </div>
+                                        <div className="h-[130px] rounded-[12px] border border-[#e5e7eb] bg-white flex flex-col items-center justify-center gap-2 text-[#9aa3af]">
+                                            <ImageIcon className="h-7 w-7" />
+                                            <span className="text-[12px]">
+                                                Upload
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Product Name
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="rounded-[12px] bg-[#F7F7F7] border border-[#edf1f3] p-4">
-                                    <div className="text-[#222f36] text-[12px] font-semibold">
-                                        Likes , Dislikes overview
-                                    </div>
-                                    <div className="mt-4 space-y-3 ">
-                                        {[
-                                            {
-                                                label: "Likes",
-                                                value: 92,
-                                                color: "bg-[#62a230]",
-                                            },
-                                            {
-                                                label: "Dislikes",
-                                                value: 8,
-                                                color: "bg-[#ef4343]",
-                                            },
-                                        ].map((row) => (
-                                            <div
-                                                key={row.label}
-                                                className="space-y-2 "
-                                            >
-                                                <div className="flex items-center justify-between text-[11px] text-[#7b848f] ">
-                                                    <span>{row.label}</span>
-                                                    <span>{row.value}%</span>
-                                                </div>
-                                                <div className="h-2 rounded-full bg-[#E6E6E6] overflow-hidden">
-                                                    <div
-                                                        className={cn(
-                                                            "h-2 rounded-full",
-                                                            row.color,
-                                                        )}
-                                                        style={{
-                                                            width: `${row.value}%`,
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <div className="w-full">
-                        <div className="mb-2">
-                            <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
-                                Most Viewed Products
-                            </h2>
-                        </div>
-
-                        <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
-                            <CardContent className="p-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_120px] gap-4">
-                                    {mostViewed.map((item, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="relative h-[170px] rounded-[10px] overflow-hidden bg-[#f6f8fa]"
-                                        >
-                                            <img
-                                                src={item.img}
-                                                alt="product"
-                                                className="w-full h-full object-cover"
+                                            <Input
+                                                placeholder="Enter Product Name"
+                                                className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]"
                                             />
-                                            <div className="absolute left-3 bottom-3 flex items-center gap-2 bg-black/60 text-white text-[11px] px-3 py-1.5 rounded-[10px]">
-                                                <Eye className="h-4 w-4" />
-                                                {item.views}
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Category
+                                            </div>
+                                            <Select defaultValue="Category">
+                                                <SelectTrigger className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]">
+                                                    <SelectValue placeholder="Choose Category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Category">
+                                                        Choose Category
+                                                    </SelectItem>
+                                                    <SelectItem value="Electronics">
+                                                        Electronics
+                                                    </SelectItem>
+                                                    <SelectItem value="Fashion">
+                                                        Fashion
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="pt-2">
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Sale Man Image
+                                            </div>
+                                            <div className="mt-3 h-[90px] flex items-center justify-center">
+                                                <div className="relative h-20 w-20 rounded-full bg-white border border-[#e5e7eb] flex items-center justify-center">
+                                                    <img
+                                                        src="/figmaAssets/ellipse-11.svg"
+                                                        alt="sales"
+                                                        className="h-14 w-14"
+                                                    />
+                                                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-white border border-[#e5e7eb] flex items-center justify-center text-[#7b848f]">
+                                                        <ImageIcon className="h-3 w-3" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
 
-                                    <div className="hidden lg:flex h-[170px] rounded-[10px] bg-[#f1f7ec] items-center justify-center">
-                                        <Button
-                                            variant="ghost"
-                                            className="h-10 rounded-[10px] bg-[#e9f3e4] text-[#62a230] hover:bg-[#e9f3e4] hover:text-[#62a230]"
-                                        >
-                                            See All
-                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Sub Category
+                                            </div>
+                                            <Select defaultValue="Sub">
+                                                <SelectTrigger className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]">
+                                                    <SelectValue placeholder="Choose Sub Category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Sub">
+                                                        Choose Sub Category
+                                                    </SelectItem>
+                                                    <SelectItem value="Laptops">
+                                                        Laptops
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    On Sale
+                                                </div>
+                                                <Select defaultValue="Yes">
+                                                    <SelectTrigger className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]">
+                                                        <SelectValue placeholder="Select option" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Yes">
+                                                            Select option
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    Sale Type
+                                                </div>
+                                                <Select defaultValue="Type">
+                                                    <SelectTrigger className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]">
+                                                        <SelectValue placeholder="Select option" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Type">
+                                                            Select option
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    Asking Price
+                                                </div>
+                                                <Input
+                                                    placeholder="$"
+                                                    className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]"
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    Purchase Price
+                                                </div>
+                                                <Input
+                                                    placeholder="$"
+                                                    className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Vendor Name
+                                            </div>
+                                            <Input className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Vendor Address
+                                            </div>
+                                            <Input className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]" />
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Sales Person Phone No.
+                                            </div>
+                                            <Input className="mt-2 h-10 rounded-[10px] bg-white border border-[#e5e7eb]" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Details
+                                            </div>
+                                            <textarea
+                                                placeholder="Write Something About Product"
+                                                className="mt-2 h-24 w-full rounded-[10px] border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#7b848f] resize-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Date Purchased
+                                            </div>
+                                            <div className="relative mt-2">
+                                                <Input
+                                                    placeholder="DD/MM/YYYY"
+                                                    className="h-10 rounded-[10px] bg-white border border-[#e5e7eb] pr-10"
+                                                />
+                                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9aa3af]" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    Deal Start Date
+                                                </div>
+                                                <div className="relative mt-2">
+                                                    <Input
+                                                        placeholder="DD/MM/YYYY"
+                                                        className="h-10 rounded-[10px] bg-white border border-[#e5e7eb] pr-10"
+                                                    />
+                                                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9aa3af]" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    Deal End Date
+                                                </div>
+                                                <div className="relative mt-2">
+                                                    <Input
+                                                        placeholder="DD/MM/YYYY"
+                                                        className="h-10 rounded-[10px] bg-white border border-[#e5e7eb] pr-10"
+                                                    />
+                                                    <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9aa3af]" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[12px] text-[#7b848f]">
+                                                Sales Description
+                                            </div>
+                                            <textarea
+                                                placeholder="Write Something About Product"
+                                                className="mt-2 h-24 w-full rounded-[10px] border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#7b848f] resize-none"
+                                            />
+                                        </div>
+                                        <Button className="h-10 w-full rounded-[10px] bg-[#62a230] text-white">
+                                            Next
                                         </Button>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <Tabs
-                        value={postType}
-                        onValueChange={(v) => setPostType(v as PostType)}
-                        className="w-full"
-                    >
-                        <div className="flex flex-wrap items-center gap-2">
-                            <TabsList className="bg-transparent p-0 gap-2 flex flex-wrap justify-start">
-                                <TabsTrigger
-                                    value="All"
-                                    className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
-                                >
-                                    All posts
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="Regular"
-                                    className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
-                                >
-                                    Regular posts
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="Sponsored"
-                                    className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
-                                >
-                                    Sponsored posts
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="Group Buy"
-                                    className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
-                                >
-                                    Group Buy Posts
-                                </TabsTrigger>
-                            </TabsList>
+                            </div>
                         </div>
-
-                        <Card className="mt-3 w-full rounded-[16px] border border-[#edf1f3] bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114] overflow-hidden">
-                            <CardContent className="p-0">
-                                <TabsContent value={postType} className="m-0">
-                                    <div className="w-full overflow-x-auto">
-                                        <div className="min-w-[1040px]">
-                                            <Table className="w-full">
-                                                <TableHeader className="bg-[#f3f3f3]">
-                                                    <TableRow className="bg-[#f3f3f3] hover:bg-[#f3f3f3]">
-                                                        <TableHead className="pl-6 w-[160px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            User Created
-                                                        </TableHead>
-                                                        <TableHead className="w-[260px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Post Title
-                                                        </TableHead>
-                                                        <TableHead className="w-[120px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Type
-                                                        </TableHead>
-                                                        <TableHead className="w-[140px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Category
-                                                        </TableHead>
-                                                        <TableHead className="w-[140px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Subcategory
-                                                        </TableHead>
-                                                        <TableHead className="w-[150px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Deal Start Date
-                                                        </TableHead>
-                                                        <TableHead className="w-[190px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
-                                                            Engagement
-                                                        </TableHead>
-                                                        <TableHead className="w-[120px] bg-[#f3f3f3] text-xs text-[#666666] font-normal text-center">
-                                                            Status
-                                                        </TableHead>
-                                                        <TableHead className="w-[80px] bg-[#f3f3f3] text-xs text-[#666666] font-normal text-center">
-                                                            More
-                                                        </TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                            </Table>
+                    ) : (
+                        <>
+                            <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
+                                        Filters
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                                        <div className="relative">
+                                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7b848f] opacity-60" />
+                                            <Input
+                                                placeholder="Search posts..."
+                                                className="h-10 rounded-[10px] bg-white border border-[#edf1f3] pl-9 text-sm"
+                                            />
                                         </div>
-                                        <div className="min-w-[1040px] h-[520px] overflow-y-auto relative">
-                                            <Table className="w-full">
-                                                <TableBody>
-                                                    {filteredPosts.map((p) => (
-                                                        <TableRow
-                                                            key={p.id}
-                                                            role="button"
-                                                            tabIndex={0}
-                                                            onClick={() =>
-                                                                setSelectedPost(
-                                                                    p,
-                                                                )
-                                                            }
-                                                            onKeyDown={(e) => {
-                                                                if (
-                                                                    e.key ===
-                                                                    "Enter"
-                                                                ) {
-                                                                    setSelectedPost(
-                                                                        p,
-                                                                    );
-                                                                }
-                                                            }}
-                                                            className="border-b border-[#f1f3f5] h-[48px] cursor-pointer hover:bg-[#fafafa]"
-                                                        >
-                                                            <TableCell className="pl-6 w-[160px]">
-                                                                <div className="flex items-center gap-2">
-                                                                    <img
-                                                                        src={
-                                                                            p.userAvatar
-                                                                        }
-                                                                        alt={
-                                                                            p.user
-                                                                        }
-                                                                        className="w-7 h-7 rounded-full"
-                                                                    />
-                                                                    <div className="text-xs text-[#222f36]">
-                                                                        {p.user}
-                                                                    </div>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="w-[260px]">
-                                                                <div className="flex items-center gap-3">
-                                                                    <img
-                                                                        src={
-                                                                            p.postImg
-                                                                        }
-                                                                        alt={
-                                                                            p.post
-                                                                        }
-                                                                        className="w-9 h-9 rounded-[8px] object-cover"
-                                                                    />
-                                                                    <div>
-                                                                        <div className="text-xs font-medium text-[#222f36]">
-                                                                            {
-                                                                                p.post
-                                                                            }
-                                                                        </div>
-                                                                        <div className="text-[10px] text-[#7b848f]">
-                                                                            20
-                                                                            min
-                                                                            ago
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="w-[120px]">
-                                                                <span
-                                                                    className={cn(
-                                                                        "px-2 py-1 rounded-full text-[10px]",
-                                                                        p.type ===
-                                                                            "Sponsored"
-                                                                            ? "bg-[#e6f3ff] text-[#2f80ed]"
-                                                                            : p.type ===
-                                                                                "Group Buy"
-                                                                              ? "bg-[#e9f3e4] text-[#62a230]"
-                                                                              : "bg-[#f1f1f1] text-[#7b848f]",
-                                                                    )}
-                                                                >
-                                                                    {p.type}
-                                                                </span>
-                                                            </TableCell>
-                                                            <TableCell className="w-[140px] text-xs text-[#7b848f]">
-                                                                {p.category}
-                                                            </TableCell>
-                                                            <TableCell className="w-[140px] text-xs text-[#7b848f]">
-                                                                {p.subCategory}
-                                                            </TableCell>
-                                                            <TableCell className="w-[150px] text-xs text-[#7b848f]">
-                                                                {p.startDate}
-                                                            </TableCell>
-                                                            <TableCell className="w-[190px]">
-                                                                <div className="flex items-center gap-5 text-[11px]">
-                                                                    <div className="flex items-center gap-1.5 text-[#222f36]">
-                                                                        <ThumbsUp className="h-4 w-4 text-[#62a230]" />
-                                                                        <span>
-                                                                            {
-                                                                                p.likes
-                                                                            }{" "}
-                                                                            likes
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1.5 text-[#222f36]">
-                                                                        <MessageCircle className="h-4 w-4 text-[#2f80ed]" />
-                                                                        <span>
-                                                                            {
-                                                                                p.comments
-                                                                            }{" "}
-                                                                            comments
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="w-[120px] text-center">
-                                                                <div className="flex items-center justify-center gap-2">
-                                                                    <span
-                                                                        className={cn(
-                                                                            "relative inline-flex h-[12px] w-[22px] flex-shrink-0 rounded-full",
-                                                                            p.status ===
-                                                                                "Active"
-                                                                                ? "bg-[#62a230]"
-                                                                                : "bg-[#cfd6dd]",
-                                                                        )}
-                                                                    >
-                                                                        <span
-                                                                            className={cn(
-                                                                                "absolute top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform",
-                                                                                p.status ===
-                                                                                    "Active"
-                                                                                    ? "translate-x-[11px] left-[1px]"
-                                                                                    : "translate-x-0 left-[1px]",
-                                                                            )}
-                                                                        />
-                                                                    </span>
-                                                                    <span
-                                                                        className={cn(
-                                                                            "text-[11px] font-medium",
-                                                                            p.status ===
-                                                                                "Active"
-                                                                                ? "text-[#62a230]"
-                                                                                : "text-[#9aa3ad]",
-                                                                        )}
-                                                                    >
-                                                                        {
-                                                                            p.status
-                                                                        }
-                                                                    </span>
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="w-[80px] text-center">
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger
-                                                                        asChild
-                                                                    >
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-8 w-8 rounded-full hover:bg-[#f4f5f7]"
-                                                                            onClick={(
-                                                                                e,
-                                                                            ) =>
-                                                                                e.stopPropagation()
-                                                                            }
-                                                                        >
-                                                                            <MoreHorizontal className="h-4 w-4 text-[#9aa3ad]" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent
-                                                                        align="end"
-                                                                        className="w-40"
-                                                                    >
-                                                                        <DropdownMenuItem className="cursor-pointer">
-                                                                            View
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuItem className="cursor-pointer">
-                                                                            Edit
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                                                                            Delete
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
+
+                                        <Select defaultValue="All">
+                                            <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
+                                                <SelectValue placeholder="All Types" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="All">
+                                                    All Types
+                                                </SelectItem>
+                                                <SelectItem value="Regular">
+                                                    Regular
+                                                </SelectItem>
+                                                <SelectItem value="Sponsored">
+                                                    Sponsored
+                                                </SelectItem>
+                                                <SelectItem value="Group Buy">
+                                                    Group Buy
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select defaultValue="Category">
+                                            <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
+                                                <SelectValue placeholder="Category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Category">
+                                                    Category
+                                                </SelectItem>
+                                                <SelectItem value="Electronics">
+                                                    Electronics
+                                                </SelectItem>
+                                                <SelectItem value="Fashion">
+                                                    Fashion
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select defaultValue="Region">
+                                            <SelectTrigger className="h-10 rounded-[10px] bg-white border border-[#edf1f3]">
+                                                <SelectValue placeholder="Region/City" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Region">
+                                                    Region/City
+                                                </SelectItem>
+                                                <SelectItem value="New York">
+                                                    New York
+                                                </SelectItem>
+                                                <SelectItem value="Bengaluru">
+                                                    Bengaluru
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Button
+                                            variant="outline"
+                                            className="h-10 rounded-[10px] bg-white border border-[#edf1f3] justify-between text-[#7b848f] font-normal"
+                                        >
+                                            Date Range
+                                            <CalendarIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
+                                        Engagement Analytics
+                                    </CardTitle>
+                                    <p className="text-[#7b848f] text-xs">
+                                        How your audience interacts with
+                                        contents
+                                    </p>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr] gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 ">
+                                            {engagementStats.map((s) => (
+                                                <div
+                                                    key={s.title}
+                                                    className="rounded-[12px] bg-[#F6F6F6] border border-[#F6F6F6] p-4"
+                                                >
+                                                    <div className="flex items-center justify-center">
+                                                        <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                                                            {s.icon ===
+                                                            "heart" ? (
+                                                                <Heart className="h-7 w-7 text-[#62a230]" />
+                                                            ) : null}
+                                                            {s.icon ===
+                                                            "comment" ? (
+                                                                <MessageCircle className="h-7 w-7 text-[#62a230]" />
+                                                            ) : null}
+                                                            {s.icon ===
+                                                            "share" ? (
+                                                                <Share2 className="h-7 w-7 text-[#62a230]" />
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3 text-center text-[#222f36] text-[18px] font-bold">
+                                                        {s.value}
+                                                    </div>
+                                                    <div className="mt-1 text-center text-[#7b848f] text-[10px]">
+                                                        {s.title}
+                                                    </div>
+                                                    <div className="mt-2 text-center text-[#62a230] text-[10px]">
+                                                        {s.sub}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="rounded-[12px] bg-[#F6F6F6] border border-[#edf1f3] p-4">
+                                            <div className="text-[#222f36] text-[12px] font-semibold">
+                                                Post Type Overview
+                                            </div>
+                                            <div className="mt-4 space-y-3">
+                                                {[
+                                                    {
+                                                        label: "Regular Post",
+                                                        value: 88,
+                                                        color: "bg-[#62a230]",
+                                                    },
+                                                    {
+                                                        label: "Group Buy",
+                                                        value: 20,
+                                                        color: "bg-[#6b7280]",
+                                                    },
+                                                    {
+                                                        label: "Sponsored Post",
+                                                        value: 4,
+                                                        color: "bg-[#ef4343]",
+                                                    },
+                                                ].map((row) => (
+                                                    <div
+                                                        key={row.label}
+                                                        className="space-y-2"
+                                                    >
+                                                        <div className="flex items-center  justify-between text-[11px] text-[#7b848f]">
+                                                            <span>
+                                                                {row.label}
+                                                            </span>
+                                                            <span>
+                                                                {row.value}k
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-2 rounded-full bg-[#E6E6E6] overflow-hidden">
+                                                            <div
+                                                                className={cn(
+                                                                    "h-2 rounded-full",
+                                                                    row.color,
+                                                                )}
+                                                                style={{
+                                                                    width: `${row.value}%`,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="rounded-[12px] bg-[#F7F7F7] border border-[#edf1f3] p-4">
+                                            <div className="text-[#222f36] text-[12px] font-semibold">
+                                                Likes , Dislikes overview
+                                            </div>
+                                            <div className="mt-4 space-y-3 ">
+                                                {[
+                                                    {
+                                                        label: "Likes",
+                                                        value: 92,
+                                                        color: "bg-[#62a230]",
+                                                    },
+                                                    {
+                                                        label: "Dislikes",
+                                                        value: 8,
+                                                        color: "bg-[#ef4343]",
+                                                    },
+                                                ].map((row) => (
+                                                    <div
+                                                        key={row.label}
+                                                        className="space-y-2 "
+                                                    >
+                                                        <div className="flex items-center justify-between text-[11px] text-[#7b848f] ">
+                                                            <span>
+                                                                {row.label}
+                                                            </span>
+                                                            <span>
+                                                                {row.value}%
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-2 rounded-full bg-[#E6E6E6] overflow-hidden">
+                                                            <div
+                                                                className={cn(
+                                                                    "h-2 rounded-full",
+                                                                    row.color,
+                                                                )}
+                                                                style={{
+                                                                    width: `${row.value}%`,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
+                                </CardContent>
+                            </Card>
 
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-4 border-t border-[#edf1f3]">
-                                        <div className="text-xs text-[#7b848f]">
-                                            Showing 1 to 100 list in 1 page
+                            <div className="w-full">
+                                <div className="mb-2">
+                                    <h2 className="[font-family:'Poppins',Helvetica] font-semibold text-[#222f36] text-sm">
+                                        Most Viewed Products
+                                    </h2>
+                                </div>
+
+                                <Card className="w-full rounded-[12px] border-0 bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114]">
+                                    <CardContent className="p-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_120px] gap-4">
+                                            {mostViewed.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="relative h-[170px] rounded-[10px] overflow-hidden bg-[#f6f8fa]"
+                                                >
+                                                    <img
+                                                        src={item.img}
+                                                        alt="product"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute left-3 bottom-3 flex items-center gap-2 bg-black/60 text-white text-[11px] px-3 py-1.5 rounded-[10px]">
+                                                        <Eye className="h-4 w-4" />
+                                                        {item.views}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <div className="hidden lg:flex h-[170px] rounded-[10px] bg-[#f1f7ec] items-center justify-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-10 rounded-[10px] bg-[#e9f3e4] text-[#62a230] hover:bg-[#e9f3e4] hover:text-[#62a230]"
+                                                >
+                                                    See All
+                                                    <ChevronRight className="h-4 w-4 ml-1" />
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center justify-end gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-9 w-9 rounded-full bg-[#e9f3e4] hover:bg-[#e9f3e4]"
-                                                onClick={() =>
-                                                    setCurrentPage((p) =>
-                                                        Math.max(1, p - 1),
-                                                    )
-                                                }
-                                                disabled={currentPage === 1}
-                                            >
-                                                <ChevronLeft className="h-4 w-4 text-[#62a230]" />
-                                            </Button>
+                                    </CardContent>
+                                </Card>
+                            </div>
 
-                                            {Array.from({
-                                                length: totalPages,
-                                            }).map((_, idx) => {
-                                                const page = idx + 1;
-                                                const label = String(
-                                                    page,
-                                                ).padStart(2, "0");
-                                                const active =
-                                                    page === currentPage;
-                                                return (
+                            <Tabs
+                                value={postType}
+                                onValueChange={(v) =>
+                                    setPostType(v as PostType)
+                                }
+                                className="w-full"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <TabsList className="bg-transparent p-0 gap-2 flex flex-wrap justify-start">
+                                        <TabsTrigger
+                                            value="All"
+                                            className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
+                                        >
+                                            All posts
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="Regular"
+                                            className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
+                                        >
+                                            Regular posts
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="Sponsored"
+                                            className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
+                                        >
+                                            Sponsored posts
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="Group Buy"
+                                            className="h-7 rounded-[6px] bg-[#fff] p-5 text-[10px] font-medium text-[#7b848f] data-[state=active]:bg-[#62a230] data-[state=active]:text-white"
+                                        >
+                                            Group Buy Posts
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <Button
+                                        onClick={() =>
+                                            setShowSponsoredForm(true)
+                                        }
+                                        className="h-8 rounded-[8px] bg-[#62a230] text-white text-[11px] font-semibold px-4"
+                                    >
+                                        Create Sponsored post
+                                    </Button>
+                                </div>
+
+                                <Card className="mt-3 w-full rounded-[16px] border border-[#edf1f3] bg-white shadow-[0px_1px_3px_#00000005,0px_6px_10px_#b1b1b114] overflow-hidden">
+                                    <CardContent className="p-0">
+                                        <TabsContent
+                                            value={postType}
+                                            className="m-0"
+                                        >
+                                            <div className="w-full overflow-x-auto">
+                                                <div className="min-w-[1040px]">
+                                                    <Table className="w-full">
+                                                        <TableHeader className="bg-[#f3f3f3]">
+                                                            <TableRow className="bg-[#f3f3f3] hover:bg-[#f3f3f3]">
+                                                                <TableHead className="pl-6 w-[160px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    User Created
+                                                                </TableHead>
+                                                                <TableHead className="w-[260px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Post Title
+                                                                </TableHead>
+                                                                <TableHead className="w-[120px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Type
+                                                                </TableHead>
+                                                                <TableHead className="w-[140px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Category
+                                                                </TableHead>
+                                                                <TableHead className="w-[140px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Subcategory
+                                                                </TableHead>
+                                                                <TableHead className="w-[150px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Deal Start
+                                                                    Date
+                                                                </TableHead>
+                                                                <TableHead className="w-[190px] bg-[#f3f3f3] text-xs text-[#666666] font-normal">
+                                                                    Engagement
+                                                                </TableHead>
+                                                                <TableHead className="w-[120px] bg-[#f3f3f3] text-xs text-[#666666] font-normal text-center">
+                                                                    Status
+                                                                </TableHead>
+                                                                <TableHead className="w-[80px] bg-[#f3f3f3] text-xs text-[#666666] font-normal text-center">
+                                                                    More
+                                                                </TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                    </Table>
+                                                </div>
+                                                <div className="min-w-[1040px] h-[520px] overflow-y-auto relative">
+                                                    <Table className="w-full">
+                                                        <TableBody>
+                                                            {filteredPosts.map(
+                                                                (p) => (
+                                                                    <TableRow
+                                                                        key={
+                                                                            p.id
+                                                                        }
+                                                                        role="button"
+                                                                        tabIndex={
+                                                                            0
+                                                                        }
+                                                                        onClick={() =>
+                                                                            setSelectedPost(
+                                                                                p,
+                                                                            )
+                                                                        }
+                                                                        onKeyDown={(
+                                                                            e,
+                                                                        ) => {
+                                                                            if (
+                                                                                e.key ===
+                                                                                "Enter"
+                                                                            ) {
+                                                                                setSelectedPost(
+                                                                                    p,
+                                                                                );
+                                                                            }
+                                                                        }}
+                                                                        className="border-b border-[#f1f3f5] h-[48px] cursor-pointer hover:bg-[#fafafa]"
+                                                                    >
+                                                                        <TableCell className="pl-6 w-[160px]">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <img
+                                                                                    src={
+                                                                                        p.userAvatar
+                                                                                    }
+                                                                                    alt={
+                                                                                        p.user
+                                                                                    }
+                                                                                    className="w-7 h-7 rounded-full"
+                                                                                />
+                                                                                <div className="text-xs text-[#222f36]">
+                                                                                    {
+                                                                                        p.user
+                                                                                    }
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[260px]">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <img
+                                                                                    src={
+                                                                                        p.postImg
+                                                                                    }
+                                                                                    alt={
+                                                                                        p.post
+                                                                                    }
+                                                                                    className="w-9 h-9 rounded-[8px] object-cover"
+                                                                                />
+                                                                                <div>
+                                                                                    <div className="text-xs font-medium text-[#222f36]">
+                                                                                        {
+                                                                                            p.post
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div className="text-[10px] text-[#7b848f]">
+                                                                                        20
+                                                                                        min
+                                                                                        ago
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[120px]">
+                                                                            <span
+                                                                                className={cn(
+                                                                                    "px-2 py-1 rounded-full text-[10px]",
+                                                                                    p.type ===
+                                                                                        "Sponsored"
+                                                                                        ? "bg-[#e6f3ff] text-[#2f80ed]"
+                                                                                        : p.type ===
+                                                                                            "Group Buy"
+                                                                                          ? "bg-[#e9f3e4] text-[#62a230]"
+                                                                                          : "bg-[#f1f1f1] text-[#7b848f]",
+                                                                                )}
+                                                                            >
+                                                                                {
+                                                                                    p.type
+                                                                                }
+                                                                            </span>
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[140px] text-xs text-[#7b848f]">
+                                                                            {
+                                                                                p.category
+                                                                            }
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[140px] text-xs text-[#7b848f]">
+                                                                            {
+                                                                                p.subCategory
+                                                                            }
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[150px] text-xs text-[#7b848f]">
+                                                                            {
+                                                                                p.startDate
+                                                                            }
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[190px]">
+                                                                            <div className="flex items-center gap-5 text-[11px]">
+                                                                                <div className="flex items-center gap-1.5 text-[#222f36]">
+                                                                                    <ThumbsUp className="h-4 w-4 text-[#62a230]" />
+                                                                                    <span>
+                                                                                        {
+                                                                                            p.likes
+                                                                                        }{" "}
+                                                                                        likes
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-1.5 text-[#222f36]">
+                                                                                    <MessageCircle className="h-4 w-4 text-[#2f80ed]" />
+                                                                                    <span>
+                                                                                        {
+                                                                                            p.comments
+                                                                                        }{" "}
+                                                                                        comments
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[120px] text-center">
+                                                                            <div className="flex items-center justify-center gap-2">
+                                                                                <span
+                                                                                    className={cn(
+                                                                                        "relative inline-flex h-[12px] w-[22px] flex-shrink-0 rounded-full",
+                                                                                        p.status ===
+                                                                                            "Active"
+                                                                                            ? "bg-[#62a230]"
+                                                                                            : "bg-[#cfd6dd]",
+                                                                                    )}
+                                                                                >
+                                                                                    <span
+                                                                                        className={cn(
+                                                                                            "absolute top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform",
+                                                                                            p.status ===
+                                                                                                "Active"
+                                                                                                ? "translate-x-[11px] left-[1px]"
+                                                                                                : "translate-x-0 left-[1px]",
+                                                                                        )}
+                                                                                    />
+                                                                                </span>
+                                                                                <span
+                                                                                    className={cn(
+                                                                                        "text-[11px] font-medium",
+                                                                                        p.status ===
+                                                                                            "Active"
+                                                                                            ? "text-[#62a230]"
+                                                                                            : "text-[#9aa3ad]",
+                                                                                    )}
+                                                                                >
+                                                                                    {
+                                                                                        p.status
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="w-[80px] text-center">
+                                                                            <DropdownMenu>
+                                                                                <DropdownMenuTrigger
+                                                                                    asChild
+                                                                                >
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="h-8 w-8 rounded-full hover:bg-[#f4f5f7]"
+                                                                                        onClick={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            e.stopPropagation()
+                                                                                        }
+                                                                                    >
+                                                                                        <MoreHorizontal className="h-4 w-4 text-[#9aa3ad]" />
+                                                                                    </Button>
+                                                                                </DropdownMenuTrigger>
+                                                                                <DropdownMenuContent
+                                                                                    align="end"
+                                                                                    className="w-40"
+                                                                                >
+                                                                                    <DropdownMenuItem className="cursor-pointer">
+                                                                                        View
+                                                                                    </DropdownMenuItem>
+                                                                                    <DropdownMenuItem className="cursor-pointer">
+                                                                                        Edit
+                                                                                    </DropdownMenuItem>
+                                                                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+                                                                                        Delete
+                                                                                    </DropdownMenuItem>
+                                                                                </DropdownMenuContent>
+                                                                            </DropdownMenu>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ),
+                                                            )}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-4 border-t border-[#edf1f3]">
+                                                <div className="text-xs text-[#7b848f]">
+                                                    Showing 1 to 100 list in 1
+                                                    page
+                                                </div>
+                                                <div className="flex items-center justify-end gap-1">
                                                     <Button
-                                                        key={label}
                                                         variant="ghost"
-                                                        className={cn(
-                                                            "h-9 w-9 rounded-full text-xs",
-                                                            active
-                                                                ? "bg-[#62a230] text-white hover:bg-[#62a230] hover:text-white"
-                                                                : "text-[#7b848f] hover:bg-transparent",
-                                                        )}
+                                                        size="icon"
+                                                        className="h-9 w-9 rounded-full bg-[#e9f3e4] hover:bg-[#e9f3e4]"
                                                         onClick={() =>
-                                                            setCurrentPage(page)
+                                                            setCurrentPage(
+                                                                (p) =>
+                                                                    Math.max(
+                                                                        1,
+                                                                        p - 1,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            currentPage === 1
                                                         }
                                                     >
-                                                        {label}
+                                                        <ChevronLeft className="h-4 w-4 text-[#62a230]" />
                                                     </Button>
-                                                );
-                                            })}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-9 w-9 rounded-full bg-[#e9f3e4] hover:bg-[#e9f3e4]"
-                                                onClick={() =>
-                                                    setCurrentPage((p) =>
-                                                        Math.min(
-                                                            totalPages,
-                                                            p + 1,
-                                                        ),
-                                                    )
-                                                }
-                                                disabled={
-                                                    currentPage === totalPages
-                                                }
-                                            >
-                                                <ChevronRight className="h-4 w-4 text-[#62a230]" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                            </CardContent>
-                        </Card>
-                    </Tabs>
+
+                                                    {Array.from({
+                                                        length: totalPages,
+                                                    }).map((_, idx) => {
+                                                        const page = idx + 1;
+                                                        const label = String(
+                                                            page,
+                                                        ).padStart(2, "0");
+                                                        const active =
+                                                            page ===
+                                                            currentPage;
+                                                        return (
+                                                            <Button
+                                                                key={label}
+                                                                variant="ghost"
+                                                                className={cn(
+                                                                    "h-9 w-9 rounded-full text-xs",
+                                                                    active
+                                                                        ? "bg-[#62a230] text-white hover:bg-[#62a230] hover:text-white"
+                                                                        : "text-[#7b848f] hover:bg-transparent",
+                                                                )}
+                                                                onClick={() =>
+                                                                    setCurrentPage(
+                                                                        page,
+                                                                    )
+                                                                }
+                                                            >
+                                                                {label}
+                                                            </Button>
+                                                        );
+                                                    })}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 rounded-full bg-[#e9f3e4] hover:bg-[#e9f3e4]"
+                                                        onClick={() =>
+                                                            setCurrentPage(
+                                                                (p) =>
+                                                                    Math.min(
+                                                                        totalPages,
+                                                                        p + 1,
+                                                                    ),
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            currentPage ===
+                                                            totalPages
+                                                        }
+                                                    >
+                                                        <ChevronRight className="h-4 w-4 text-[#62a230]" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </TabsContent>
+                                    </CardContent>
+                                </Card>
+                            </Tabs>
+                        </>
+                    )}
                 </div>
             </main>
 
