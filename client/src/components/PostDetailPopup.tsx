@@ -14,6 +14,7 @@ import {
     Play,
     Share2,
     Star,
+    Sparkles,
     ThumbsUp,
     Trash2,
     X,
@@ -61,6 +62,7 @@ export function PostDetailPopup({
     const [confirmAction, setConfirmAction] = useState<
         null | "delete" | "block"
     >(null);
+    const [reviewsOpen, setReviewsOpen] = useState(false);
 
     const [deleteReasonOpen, setDeleteReasonOpen] = useState(false);
     const [deleteReason, setDeleteReason] = useState<
@@ -73,6 +75,11 @@ export function PostDetailPopup({
 
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key !== "Escape") return;
+
+            if (reviewsOpen) {
+                setReviewsOpen(false);
+                return;
+            }
 
             if (deleteReasonOpen) {
                 setDeleteReasonOpen(false);
@@ -95,7 +102,7 @@ export function PostDetailPopup({
             window.removeEventListener("keydown", onKeyDown);
             document.body.style.overflow = prevOverflow;
         };
-    }, [open, onClose, confirmAction, deleteReasonOpen]);
+    }, [open, onClose, confirmAction, deleteReasonOpen, reviewsOpen]);
 
     const gallery = post
         ? [
@@ -118,6 +125,10 @@ export function PostDetailPopup({
                     <div
                         className="absolute inset-0 bg-black/30"
                         onClick={() => {
+                            if (reviewsOpen) {
+                                setReviewsOpen(false);
+                                return;
+                            }
                             if (deleteReasonOpen) {
                                 setDeleteReasonOpen(false);
                                 return;
@@ -454,10 +465,16 @@ export function PostDetailPopup({
                                                 <div className="text-[12px] font-medium text-[#7b848f]">
                                                     4.5
                                                 </div>
-                                                <div className="text-[12px] text-[#7b848f]">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setReviewsOpen(true)
+                                                    }
+                                                    className="flex items-center gap-2 text-[12px] text-[#7b848f]"
+                                                >
                                                     see reviews
-                                                </div>
-                                                <ChevronRight className="h-4 w-4 text-[#7b848f]" />
+                                                    <ChevronRight className="h-4 w-4 text-[#7b848f]" />
+                                                </button>
                                             </div>
                                         </div>
 
@@ -753,6 +770,202 @@ export function PostDetailPopup({
                             </div>
                         </div>
                     </motion.div>
+
+                    <AnimatePresence>
+                        {reviewsOpen ? (
+                            <motion.div
+                                className="absolute inset-0 z-[140]"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            >
+                                <div
+                                    className="absolute inset-0"
+                                    onClick={() => setReviewsOpen(false)}
+                                />
+                                <motion.div
+                                    className="absolute right-0 top-0 h-full w-[420px] max-w-[90vw] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.2)]"
+                                    initial={{ x: "100%" }}
+                                    animate={{ x: 0 }}
+                                    exit={{ x: "100%" }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 260,
+                                        damping: 28,
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div className="h-full flex flex-col">
+                                        <div className="h-[64px] px-6 flex items-center justify-between border-b border-[#edf1f3]">
+                                            <div className="text-[18px] font-semibold text-[#222f36]">
+                                                Reviews
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="h-9 w-9 rounded-full hover:bg-[#f6f8fa] flex items-center justify-center"
+                                                onClick={() =>
+                                                    setReviewsOpen(false)
+                                                }
+                                            >
+                                                <X className="h-4 w-4 text-[#7b848f]" />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto px-6 py-5">
+                                            <div className="flex items-center gap-2 text-[#62a230] text-[13px] font-semibold">
+                                                <Sparkles className="h-4 w-4" />
+                                                Customer says
+                                            </div>
+                                            <p className="mt-2 text-[12px] text-[#7b848f] leading-5">
+                                                Lorem ipsum dolor sit amet
+                                                consectetur. In tincidunt a
+                                                pellentesque gravida pellentesque
+                                                suspendisse interdum. Praesent
+                                                risus non id auctor. Non tortor
+                                                quis pretium placerat.
+                                                Vestibulum convallis .
+                                            </p>
+
+                                            <div className="mt-5 flex items-center justify-between">
+                                                <div className="text-[12px] text-[#7b848f]">
+                                                    902 reviews
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1">
+                                                        {Array.from({
+                                                            length: 5,
+                                                        }).map((_, i) => (
+                                                            <Star
+                                                                key={`review-star-${i}`}
+                                                                className="h-4 w-4 text-[#f59e0b] fill-[#f59e0b]"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <div className="text-[12px] text-[#222f36] font-semibold">
+                                                        4.7
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 space-y-3">
+                                                {[
+                                                    {
+                                                        label: "5 Stars",
+                                                        count: 852,
+                                                    },
+                                                    {
+                                                        label: "4 Stars",
+                                                        count: 37,
+                                                    },
+                                                    {
+                                                        label: "3 Stars",
+                                                        count: 9,
+                                                    },
+                                                    {
+                                                        label: "2 Stars",
+                                                        count: 2,
+                                                    },
+                                                    {
+                                                        label: "1 Star",
+                                                        count: 2,
+                                                    },
+                                                ].map((item) => {
+                                                    const percent = Math.min(
+                                                        100,
+                                                        (item.count / 902) *
+                                                            100,
+                                                    );
+                                                    return (
+                                                        <div
+                                                            key={item.label}
+                                                            className="flex items-center gap-3 text-[11px] text-[#7b848f]"
+                                                        >
+                                                            <div className="w-14">
+                                                                {item.label}
+                                                            </div>
+                                                            <div className="flex-1 h-2 rounded-full bg-[#eef2f6] overflow-hidden">
+                                                                <div
+                                                                    className="h-full rounded-full bg-[#f59e0b]"
+                                                                    style={{
+                                                                        width: `${percent}%`,
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="w-10 text-right">
+                                                                ({item.count})
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="mt-6 space-y-5">
+                                                {[
+                                                    {
+                                                        name: "Wilson Franci",
+                                                        rating: 3,
+                                                        time: "4w",
+                                                        text: "Lorem ipsum dolor sit amet consectetur. Enim viverra sed dictumst posuere aliquet eu consequat. Nullam id odio diam mi ultrices lectus sit. Diam tortor vestibulum eget massa urna tincidunt nibh. Facilisis lacinia in nunc quam fermentum. Praesent.",
+                                                    },
+                                                    {
+                                                        name: "Wilson Franci",
+                                                        rating: 3,
+                                                        time: "4w",
+                                                        text: "Lorem ipsum dolor sit amet consectetur. Enim viverra sed dictumst posuere aliquet eu consequat. Nullam id odio diam mi ultrices lectus sit. Diam tortor vestibulum eget massa urna tincidunt nibh. Facilisis lacinia in nunc quam fermentum. Praesent.",
+                                                    },
+                                                ].map((review, index) => (
+                                                    <div
+                                                        key={`${review.name}-${index}`}
+                                                        className="flex gap-3"
+                                                    >
+                                                        <img
+                                                            src="/figmaAssets/2-jpg.png"
+                                                            alt={review.name}
+                                                            className="h-9 w-9 rounded-full object-cover"
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="text-[12px] font-semibold text-[#222f36]">
+                                                                    {review.name}
+                                                                </div>
+                                                                <div className="flex items-center gap-1 text-[#f59e0b]">
+                                                                    {Array.from({
+                                                                        length:
+                                                                            review.rating,
+                                                                    }).map(
+                                                                        (
+                                                                            _,
+                                                                            i,
+                                                                        ) => (
+                                                                            <Star
+                                                                                key={`r-${index}-${i}`}
+                                                                                className="h-3 w-3 text-[#f59e0b] fill-[#f59e0b]"
+                                                                            />
+                                                                        ),
+                                                                    )}
+                                                                    <span className="ml-1 text-[11px] text-[#7b848f]">
+                                                                        {
+                                                                            review.rating
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-1 text-[11px] text-[#7b848f] leading-5">
+                                                                {review.text}
+                                                            </div>
+                                                            <div className="mt-2 text-[10px] text-[#9aa3af]">
+                                                                {review.time}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        ) : null}
+                    </AnimatePresence>
                 </motion.div>
             ) : null}
         </AnimatePresence>

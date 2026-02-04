@@ -74,7 +74,7 @@ function BlockConfirmModal({
         <AnimatePresence>
             {open ? (
                 <motion.div
-                    className="fixed inset-0 z-[170]"
+                    className="fixed inset-0 z-[170] "
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -96,7 +96,7 @@ function BlockConfirmModal({
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="w-full max-w-[720px] rounded-[14px] bg-white shadow-[0px_18px_45px_rgba(0,0,0,0.18)] border border-[#eef2f6] relative">
+                        <div className="w-full max-w-[720px] rounded-[34px] bg-white shadow-[0px_18px_45px_rgba(0,0,0,0.18)] border border-[#eef2f6] relative">
                             <button
                                 type="button"
                                 onClick={onClose}
