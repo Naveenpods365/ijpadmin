@@ -58,7 +58,7 @@ export function Sidebar({
     className?: string;
     variant?: "desktop" | "drawer";
 }) {
-    const [location] = useLocation();
+    const [location, setLocation] = useLocation();
 
     const isDrawer = variant === "drawer";
 
@@ -150,6 +150,36 @@ export function Sidebar({
                     <nav className="space-y-1">
                         {otherMenuItems.map((item) => {
                             const isActive = location === item.url;
+                            if (item.title === "Sign Out") {
+                                return (
+                                    <button
+                                        key={item.title}
+                                        type="button"
+                                        onClick={() => {
+                                            localStorage.removeItem("auth");
+                                            setLocation("/login");
+                                        }}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                                            isActive
+                                                ? "bg-[#62a230] text-white font-medium"
+                                                : "text-white/60 hover:text-white hover:bg-white/5",
+                                        )}
+                                    >
+                                        <item.icon
+                                            className={cn(
+                                                "w-5 h-5",
+                                                isActive
+                                                    ? "text-white"
+                                                    : "text-white/40 group-hover:text-white",
+                                            )}
+                                        />
+                                        <span className="text-[14px] font-medium">
+                                            {item.title}
+                                        </span>
+                                    </button>
+                                );
+                            }
                             return (
                                 <Link
                                     key={item.title}

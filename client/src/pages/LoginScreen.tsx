@@ -116,7 +116,10 @@ export const LoginScreen = (): JSX.Element => {
 
                         <Button
                             className="h-11 w-full rounded-[10px] bg-[#62a230] font-semibold text-white hover:bg-[#559026]"
-                            onClick={() => setLocation("/")}
+                            onClick={() => {
+                                localStorage.setItem("auth", "true");
+                                setLocation("/");
+                            }}
                         >
                             Sign In
                         </Button>

@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -23,6 +24,27 @@ import { AdminManagementScreen } from "@/pages/AdminManagementScreen";
 import { ProfileScreen } from "@/pages/ProfileScreen";
 
 function Router() {
+    const [location, setLocation] = useLocation();
+    const isAuthed = localStorage.getItem("auth") === "true";
+
+    useEffect(() => {
+        if (!isAuthed && location !== "/login") {
+            setLocation("/login");
+        }
+        if (isAuthed && location === "/login") {
+            setLocation("/");
+        }
+    }, [isAuthed, location, setLocation]);
+
+    if (!isAuthed) {
+        return (
+            <Switch>
+                <Route path="/login" component={LoginScreen} />
+                <Route component={LoginScreen} />
+            </Switch>
+        );
+    }
+
     return (
         <Switch>
             {/* Add pages below */}
