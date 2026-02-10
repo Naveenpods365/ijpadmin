@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLogin } from "@/hooks/useAuth";
 
 export const LoginScreen = (): JSX.Element => {
     const [, setLocation] = useLocation();
@@ -14,6 +15,11 @@ export const LoginScreen = (): JSX.Element => {
     const [step, setStep] = useState<
         "login" | "forgot" | "verify" | "success" | "reset"
     >("login");
+
+    // ── Login form state ───────────────────────────────────────────
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const loginMutation = useLogin();
 
     const OTP_LENGTH = 5;
     const [otp, setOtp] = useState(
@@ -54,7 +60,21 @@ export const LoginScreen = (): JSX.Element => {
                         Login Administration
                     </h1>
 
-                    <div className="mt-8 space-y-5">
+                    <form
+                        className="mt-8 space-y-5"
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            try {
+                                await loginMutation.mutateAsync({
+                                    email,
+                                    password,
+                                });
+                                setLocation("/");
+                            } catch {
+                                // error toast handled in hook
+                            }
+                        }}
+                    >
                         <div className="space-y-2">
                             <Label className="text-[11px] font-medium text-[#222f36]">
                                 Email
@@ -62,6 +82,8 @@ export const LoginScreen = (): JSX.Element => {
                             <Input
                                 type="email"
                                 placeholder="Enter your email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="h-11 rounded-[10px] border-0 bg-[#f5f5f5] text-[#222f36] placeholder:text-[#8c8c8c] focus-visible:ring-2 focus-visible:ring-[#62a230]"
                             />
                         </div>
@@ -74,6 +96,8 @@ export const LoginScreen = (): JSX.Element => {
                                 <Input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="********"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     className="h-11 rounded-[10px] border-0 bg-[#f5f5f5] pr-12 text-[#222f36] placeholder:text-[#8c8c8c] focus-visible:ring-2 focus-visible:ring-[#62a230]"
                                 />
                                 <button
@@ -115,15 +139,20 @@ export const LoginScreen = (): JSX.Element => {
                         </div>
 
                         <Button
-                            className="h-11 w-full rounded-[10px] bg-[#62a230] font-semibold text-white hover:bg-[#559026]"
-                            onClick={() => {
-                                localStorage.setItem("auth", "true");
-                                setLocation("/");
-                            }}
+                            type="submit"
+                            className="h-11 w-full rounded-[10px] bg-[#62a230] font-semibold text-white hover:bg-[#559026] disabled:opacity-60"
+                            disabled={loginMutation.isPending || !email || !password}
                         >
-                            Sign In
+                            {loginMutation.isPending ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Signing In...
+                                </>
+                            ) : (
+                                "Sign In"
+                            )}
                         </Button>
-                    </div>
+                    </form>
                 </>
             );
         }

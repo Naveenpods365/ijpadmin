@@ -25,7 +25,9 @@ import { ProfileScreen } from "@/pages/ProfileScreen";
 
 function Router() {
     const [location, setLocation] = useLocation();
-    const isAuthed = localStorage.getItem("auth") === "true";
+    const isAuthed =
+        localStorage.getItem("auth") === "true" &&
+        !!localStorage.getItem("accessToken");
 
     useEffect(() => {
         if (!isAuthed && location !== "/login") {

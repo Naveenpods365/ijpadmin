@@ -1,5 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import api from "./axios";
 
+// ── Legacy fetch-based helpers (kept for backwards compatibility) ──────
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -23,22 +25,36 @@ export async function apiRequest(
   return res;
 }
 
+// ── Axios-based helper for mutations ──────────────────────────────────
+export async function axiosRequest<T = unknown>(
+  method: "get" | "post" | "put" | "patch" | "delete",
+  url: string,
+  data?: unknown,
+): Promise<T> {
+  const response = await api.request<T>({ method, url, data });
+  return response.data;
+}
+
+// ── Default query function ────────────────────────────────────────────
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    try {
+      // Try Axios first (uses auth interceptor automatically)
+      const { data } = await api.get(queryKey.join("/") as string);
+      return data;
+    } catch (error: any) {
+      if (
+        unauthorizedBehavior === "returnNull" &&
+        error.response?.status === 401
+      ) {
+        return null;
+      }
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -47,8 +63,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes (better for API data)
+      retry: 1,
     },
     mutations: {
       retry: false,
