@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "wouter";
 import {
     Calendar as CalendarIcon,
     ChevronLeft,
@@ -6,11 +7,13 @@ import {
     Eye,
     Heart,
     Image as ImageIcon,
+    Loader2,
     MessageCircle,
     MoreHorizontal,
     SearchIcon,
     Share2,
     ThumbsUp,
+    X,
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import {
@@ -47,6 +50,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { DashboardHeader } from "@/pages/Dashboard/DashboardHeader";
 import { cn } from "@/lib/utils";
+import { usePosts, useDeletePost } from "@/hooks/usePosts";
+import type { Post } from "@/services/postService";
+import { format } from "date-fns";
 
 type PostType = "All" | "Regular" | "Sponsored" | "Group Buy";
 
@@ -78,29 +84,33 @@ const mostViewed = [
     { img: "/figmaAssets/group-3.png", views: "1.5 M" },
 ];
 
-const posts = Array.from({ length: 10 }).map((_, i) => ({
-    id: i + 1,
-    user: "John Doe",
-    userAvatar: "/figmaAssets/ellipse-11.svg",
-    post: "Amazing Laptop Deal",
-    postImg:
-        i % 2 === 0 ? "/figmaAssets/group-1.png" : "/figmaAssets/group-2.png",
-    type: (i % 3 === 0
-        ? "Sponsored"
-        : i % 3 === 1
-          ? "Regular"
-          : "Group Buy") as Exclude<PostType, "All">,
-    category: "Electronics",
-    subCategory: "Laptops",
-    startDate: "12-11-2024",
-    likes: 45,
-    comments: 12,
-    status: i % 4 === 0 ? "Inactive" : "Active",
-}));
+/** Map an API Post to the PostDetailData shape used by the popup */
+function toPostDetailData(p: Post, idx: number): PostDetailData {
+    return {
+        id: idx,
+        user: p.authorDetails?.name || "Unknown",
+        userAvatar: p.authorDetails?.avatar || "/figmaAssets/ellipse-11.svg",
+        post: p.title,
+        postImg: p.thumbnail || "/figmaAssets/group-1.png",
+        type: p.type,
+        category: p.category,
+        subCategory: p.subCategory || "—",
+        startDate: p.dealStartDate
+            ? format(new Date(p.dealStartDate), "dd-MM-yyyy")
+            : "—",
+        likes: p.engagement?.likes ?? 0,
+        comments: p.engagement?.comments ?? 0,
+        status: p.status === "ACTIVE" ? "Active" : p.status,
+    };
+}
+
+type DeleteReason = "reason1" | "reason2" | "reason3" | "reason4" | "custom";
 
 export const PostsDealsScreen = (): JSX.Element => {
+    const [, setLocationPath] = useLocation();
     const [postType, setPostType] = useState<PostType>("All");
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
     const [selectedPost, setSelectedPost] = useState<PostDetailData | null>(
         null,
     );
@@ -108,12 +118,44 @@ export const PostsDealsScreen = (): JSX.Element => {
         null,
     );
     const [showSponsoredForm, setShowSponsoredForm] = useState(false);
-    const totalPages = 5;
 
+    // Delete dialog state
+    const [deletePostId, setDeletePostId] = useState<string | null>(null);
+    const [deletePostTitle, setDeletePostTitle] = useState("");
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDeleteReason, setShowDeleteReason] = useState(false);
+    const [deleteReason, setDeleteReason] = useState<DeleteReason>("reason1");
+    const [deleteCustomReason, setDeleteCustomReason] = useState("");
+
+    // Track locally-deleted post IDs so they stay hidden even after server refetch
+    const [deletedPostIds, setDeletedPostIds] = useState<Set<string>>(new Set());
+
+    const deletePostMutation = useDeletePost();
+
+    // Build API params
+    const apiParams = useMemo(() => {
+        const params: Record<string, unknown> = {
+            page: currentPage,
+            limit: 20,
+        };
+        if (postType !== "All") params.type = postType;
+        if (searchQuery.trim()) params.search = searchQuery.trim();
+        return params;
+    }, [currentPage, postType, searchQuery]);
+
+    const { data: postsResponse, isLoading } = usePosts(apiParams);
+
+    const rawPosts = postsResponse?.data?.posts ?? [];
+    const posts = rawPosts.filter((p: any) => !deletedPostIds.has(p._id));
+    const pagination = postsResponse?.data?.pagination;
+    const totalPages = pagination?.pages ?? 1;
+
+    // Filter client-side for tab switching (API already filters by type, but
+    // keep client-side filter as a fallback for the "All" case)
     const filteredPosts = useMemo(() => {
         if (postType === "All") return posts;
         return posts.filter((p) => p.type === postType);
-    }, [postType]);
+    }, [postType, posts]);
 
     return (
         <div className="bg-[#F5F6FA] w-full h-screen overflow-hidden">
@@ -405,6 +447,11 @@ export const PostsDealsScreen = (): JSX.Element => {
                                             <Input
                                                 placeholder="Search posts..."
                                                 className="h-10 rounded-[10px] bg-white border border-[#edf1f3] pl-9 text-sm"
+                                                value={searchQuery}
+                                                onChange={(e) => {
+                                                    setSearchQuery(e.target.value);
+                                                    setCurrentPage(1);
+                                                }}
                                             />
                                         </div>
 
@@ -661,9 +708,10 @@ export const PostsDealsScreen = (): JSX.Element => {
 
                             <Tabs
                                 value={postType}
-                                onValueChange={(v) =>
-                                    setPostType(v as PostType)
-                                }
+                                onValueChange={(v) => {
+                                    setPostType(v as PostType);
+                                    setCurrentPage(1);
+                                }}
                                 className="w-full"
                             >
                                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -747,13 +795,28 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                     </Table>
                                                 </div>
                                                 <div className="min-w-[1040px] h-[520px] overflow-y-auto relative">
+                                                    {isLoading ? (
+                                                        <div className="flex items-center justify-center h-full">
+                                                            <Loader2 className="h-8 w-8 animate-spin text-[#62a230]" />
+                                                        </div>
+                                                    ) : filteredPosts.length === 0 ? (
+                                                        <div className="flex items-center justify-center h-full text-[#7b848f] text-sm">
+                                                            No posts found
+                                                        </div>
+                                                    ) : (
                                                     <Table className="w-full">
                                                         <TableBody>
                                                             {filteredPosts.map(
-                                                                (p) => (
+                                                                (p, idx) => {
+                                                                    const detailData = toPostDetailData(p, idx);
+                                                                    const displayDate = p.dealStartDate
+                                                                        ? format(new Date(p.dealStartDate), "dd-MM-yyyy")
+                                                                        : "—";
+                                                                    const statusLabel = p.status === "ACTIVE" ? "Active" : p.status;
+                                                                    return (
                                                                     <TableRow
                                                                         key={
-                                                                            p.id
+                                                                            p._id
                                                                         }
                                                                         role="button"
                                                                         tabIndex={
@@ -761,7 +824,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                         }
                                                                         onClick={() =>
                                                                             setSelectedPost(
-                                                                                p,
+                                                                                detailData,
                                                                             )
                                                                         }
                                                                         onKeyDown={(
@@ -772,7 +835,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                 "Enter"
                                                                             ) {
                                                                                 setSelectedPost(
-                                                                                    p,
+                                                                                    detailData,
                                                                                 );
                                                                             }
                                                                         }}
@@ -782,16 +845,19 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                             <div className="flex items-center gap-2">
                                                                                 <img
                                                                                     src={
-                                                                                        p.userAvatar
+                                                                                        p.authorDetails?.avatar || "/figmaAssets/ellipse-11.svg"
                                                                                     }
                                                                                     alt={
-                                                                                        p.user
+                                                                                        p.authorDetails?.name || "User"
                                                                                     }
-                                                                                    className="w-7 h-7 rounded-full"
+                                                                                    className="w-7 h-7 rounded-full object-cover bg-[#f0f0f0]"
+                                                                                    onError={(e) => {
+                                                                                        (e.target as HTMLImageElement).src = "/figmaAssets/ellipse-11.svg";
+                                                                                    }}
                                                                                 />
-                                                                                <div className="text-xs text-[#222f36]">
+                                                                                <div className="text-xs text-[#222f36] truncate max-w-[100px]">
                                                                                     {
-                                                                                        p.user
+                                                                                        p.authorDetails?.name || "Unknown"
                                                                                     }
                                                                                 </div>
                                                                             </div>
@@ -800,23 +866,26 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                             <div className="flex items-center gap-3">
                                                                                 <img
                                                                                     src={
-                                                                                        p.postImg
+                                                                                        p.thumbnail || "/figmaAssets/group-1.png"
                                                                                     }
                                                                                     alt={
-                                                                                        p.post
+                                                                                        p.title
                                                                                     }
-                                                                                    className="w-9 h-9 rounded-[8px] object-cover"
+                                                                                    className="w-9 h-9 rounded-[8px] object-cover bg-[#f0f0f0]"
+                                                                                    onError={(e) => {
+                                                                                        (e.target as HTMLImageElement).src = "/figmaAssets/group-1.png";
+                                                                                    }}
                                                                                 />
                                                                                 <div>
-                                                                                    <div className="text-xs font-medium text-[#222f36]">
+                                                                                    <div className="text-xs font-medium text-[#222f36] truncate max-w-[180px]">
                                                                                         {
-                                                                                            p.post
+                                                                                            p.title
                                                                                         }
                                                                                     </div>
                                                                                     <div className="text-[10px] text-[#7b848f]">
-                                                                                        20
-                                                                                        min
-                                                                                        ago
+                                                                                        {p.createdAt
+                                                                                            ? format(new Date(p.createdAt), "dd MMM yyyy")
+                                                                                            : "—"}
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -846,12 +915,12 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                         </TableCell>
                                                                         <TableCell className="w-[140px] text-xs text-[#7b848f]">
                                                                             {
-                                                                                p.subCategory
+                                                                                p.subCategory || "—"
                                                                             }
                                                                         </TableCell>
                                                                         <TableCell className="w-[150px] text-xs text-[#7b848f]">
                                                                             {
-                                                                                p.startDate
+                                                                                displayDate
                                                                             }
                                                                         </TableCell>
                                                                         <TableCell className="w-[190px]">
@@ -860,7 +929,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                     <ThumbsUp className="h-4 w-4 text-[#62a230]" />
                                                                                     <span>
                                                                                         {
-                                                                                            p.likes
+                                                                                            p.engagement?.likes ?? 0
                                                                                         }{" "}
                                                                                         likes
                                                                                     </span>
@@ -869,7 +938,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                     <MessageCircle className="h-4 w-4 text-[#2f80ed]" />
                                                                                     <span>
                                                                                         {
-                                                                                            p.comments
+                                                                                            p.engagement?.comments ?? 0
                                                                                         }{" "}
                                                                                         comments
                                                                                     </span>
@@ -881,7 +950,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                 <span
                                                                                     className={cn(
                                                                                         "relative inline-flex h-[12px] w-[22px] flex-shrink-0 rounded-full",
-                                                                                        p.status ===
+                                                                                        statusLabel ===
                                                                                             "Active"
                                                                                             ? "bg-[#62a230]"
                                                                                             : "bg-[#cfd6dd]",
@@ -890,7 +959,7 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                     <span
                                                                                         className={cn(
                                                                                             "absolute top-1/2 h-[10px] w-[10px] -translate-y-1/2 rounded-full bg-white shadow-sm transition-transform",
-                                                                                            p.status ===
+                                                                                            statusLabel ===
                                                                                                 "Active"
                                                                                                 ? "translate-x-[11px] left-[1px]"
                                                                                                 : "translate-x-0 left-[1px]",
@@ -900,14 +969,14 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                 <span
                                                                                     className={cn(
                                                                                         "text-[11px] font-medium",
-                                                                                        p.status ===
+                                                                                        statusLabel ===
                                                                                             "Active"
                                                                                             ? "text-[#62a230]"
                                                                                             : "text-[#9aa3ad]",
                                                                                     )}
                                                                                 >
                                                                                     {
-                                                                                        p.status
+                                                                                        statusLabel
                                                                                     }
                                                                                 </span>
                                                                             </div>
@@ -934,30 +1003,52 @@ export const PostsDealsScreen = (): JSX.Element => {
                                                                                     align="end"
                                                                                     className="w-40"
                                                                                 >
-                                                                                    <DropdownMenuItem className="cursor-pointer">
+                                                                                    <DropdownMenuItem
+                                                                                        className="cursor-pointer"
+                                                                                        onSelect={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setSelectedPost(detailData);
+                                                                                        }}
+                                                                                    >
                                                                                         View
                                                                                     </DropdownMenuItem>
-                                                                                    <DropdownMenuItem className="cursor-pointer">
+                                                                                    <DropdownMenuItem
+                                                                                        className="cursor-pointer"
+                                                                                        onSelect={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setLocationPath(`/posts/edit?id=${p._id}`);
+                                                                                        }}
+                                                                                    >
                                                                                         Edit
                                                                                     </DropdownMenuItem>
-                                                                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+                                                                                    <DropdownMenuItem
+                                                                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                                                                        onSelect={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setDeletePostId(p._id);
+                                                                                            setDeletePostTitle(p.title);
+                                                                                            setShowDeleteConfirm(true);
+                                                                                        }}
+                                                                                    >
                                                                                         Delete
                                                                                     </DropdownMenuItem>
                                                                                 </DropdownMenuContent>
                                                                             </DropdownMenu>
                                                                         </TableCell>
                                                                     </TableRow>
-                                                                ),
+                                                                );},
                                                             )}
                                                         </TableBody>
                                                     </Table>
+                                                    )}
                                                 </div>
                                             </div>
 
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-4 border-t border-[#edf1f3]">
                                                 <div className="text-xs text-[#7b848f]">
-                                                    Showing 1 to 100 list in 1
-                                                    page
+                                                    {pagination
+                                                        ? `Showing page ${pagination.page} of ${pagination.pages} (${Math.max(0, (pagination.total ?? 0) - deletedPostIds.size)} total posts)`
+                                                        : "Loading..."}
                                                 </div>
                                                 <div className="flex items-center justify-end gap-1">
                                                     <Button
@@ -1056,6 +1147,202 @@ export const PostsDealsScreen = (): JSX.Element => {
                 post={insightsPost}
                 onClose={() => setInsightsPost(null)}
             />
+
+            {/* ── Delete Confirm Dialog ─────────────────────────── */}
+            {showDeleteConfirm && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center"
+                    onClick={() => setShowDeleteConfirm(false)}
+                >
+                    <div className="absolute inset-0 bg-black/30" />
+                    <div
+                        className="relative w-[620px] max-w-[calc(100vw-40px)] rounded-[16px] bg-white px-10 py-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            aria-label="Close"
+                            className="absolute right-4 top-4 h-9 w-9 rounded-full hover:bg-[#f6f8fa] flex items-center justify-center"
+                            onClick={() => setShowDeleteConfirm(false)}
+                        >
+                            <X className="h-4 w-4 text-[#7b848f]" />
+                        </button>
+
+                        <div className="text-center">
+                            <div className="text-[18px] font-semibold text-[#222f36]">
+                                Are you sure you want to delete this post?
+                            </div>
+                            <div className="mt-2 text-[13px] text-[#7b848f]">
+                                &ldquo;{deletePostTitle}&rdquo;
+                            </div>
+                            <div className="mt-3 text-[12px] text-[#7b848f] leading-5">
+                                This action cannot be undone. The post will be permanently removed.
+                            </div>
+
+                            <div className="mt-8 flex items-center justify-center gap-6">
+                                <Button
+                                    type="button"
+                                    className="h-10 w-[110px] rounded-[10px] bg-[#62a230] text-white hover:bg-[#62a230] hover:text-white"
+                                    onClick={() => {
+                                        setShowDeleteConfirm(false);
+                                        setShowDeleteReason(true);
+                                    }}
+                                >
+                                    Yes
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="h-10 w-[110px] rounded-[10px] border-[#e5e7eb] bg-[#f4f5f7] text-[#222f36] hover:bg-[#f4f5f7] hover:text-[#222f36]"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                >
+                                    No
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Delete Reason Dialog ──────────────────────────── */}
+            {showDeleteReason && (
+                <div
+                    className="fixed inset-0 z-[210] flex items-center justify-center"
+                    onClick={() => setShowDeleteReason(false)}
+                >
+                    <div className="absolute inset-0 bg-black/30" />
+                    <div
+                        className="relative w-[520px] max-w-[calc(100vw-40px)] rounded-[22px] bg-white px-8 py-8 shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            aria-label="Close"
+                            className="absolute right-5 top-5 h-9 w-9 rounded-full hover:bg-[#f6f8fa] flex items-center justify-center"
+                            onClick={() => setShowDeleteReason(false)}
+                        >
+                            <X className="h-4 w-4 text-[#7b848f]" />
+                        </button>
+
+                        <div className="text-[22px] font-semibold text-[#222f36]">
+                            Why Are You Deleting This Post?
+                        </div>
+
+                        <div className="mt-7 space-y-4">
+                            {[
+                                { key: "reason1" as const, label: "Inappropriate Content" },
+                                { key: "reason2" as const, label: "Spam Content" },
+                                { key: "reason3" as const, label: "Violates Community Guidelines" },
+                                { key: "reason4" as const, label: "Reported by Users" },
+                            ].map((r) => {
+                                const selected = deleteReason === r.key;
+                                return (
+                                    <button
+                                        key={r.key}
+                                        type="button"
+                                        onClick={() => setDeleteReason(r.key)}
+                                        className="w-full rounded-[14px] bg-[#f6f7f9] px-6 py-5 flex items-center justify-between text-left"
+                                    >
+                                        <div className="text-[15px] text-[#222f36]">
+                                            {r.label}
+                                        </div>
+                                        <div
+                                            className={
+                                                selected
+                                                    ? "h-5 w-5 rounded-full border-2 border-[#62a230] flex items-center justify-center"
+                                                    : "h-5 w-5 rounded-full border-2 border-[#d0d5dd]"
+                                            }
+                                        >
+                                            {selected && (
+                                                <div className="h-[10px] w-[10px] rounded-full bg-[#62a230]" />
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+
+                            <div className="w-full rounded-[14px] bg-[#f6f7f9] px-6 py-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setDeleteReason("custom")}
+                                    className="w-full flex items-center justify-between text-left"
+                                >
+                                    <div className="text-[15px] text-[#222f36]">
+                                        Custom Reason
+                                    </div>
+                                    <div
+                                        className={
+                                            deleteReason === "custom"
+                                                ? "h-5 w-5 rounded-full border-2 border-[#62a230] flex items-center justify-center"
+                                                : "h-5 w-5 rounded-full border-2 border-[#d0d5dd]"
+                                        }
+                                    >
+                                        {deleteReason === "custom" && (
+                                            <div className="h-[10px] w-[10px] rounded-full bg-[#62a230]" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                <textarea
+                                    className="mt-4 w-full min-h-[120px] rounded-[12px] border border-[#e5e7eb] bg-white px-4 py-3 text-[13px] text-[#222f36] outline-none resize-none"
+                                    placeholder="Write Something"
+                                    value={deleteCustomReason}
+                                    onChange={(e) => setDeleteCustomReason(e.target.value)}
+                                    onFocus={() => setDeleteReason("custom")}
+                                />
+                            </div>
+                        </div>
+
+                        <Button
+                            type="button"
+                            className="mt-7 h-12 w-full rounded-[12px] bg-[#62a230] text-white hover:bg-[#62a230] hover:text-white"
+                            disabled={deletePostMutation.isPending}
+                            onClick={() => {
+                                if (!deletePostId) return;
+                                const reasonLabels: Record<string, string> = {
+                                    reason1: "Inappropriate Content",
+                                    reason2: "Spam Content",
+                                    reason3: "Violates Community Guidelines",
+                                    reason4: "Reported by Users",
+                                };
+                                const finalReason =
+                                    deleteReason === "custom"
+                                        ? deleteCustomReason || "Custom reason"
+                                        : reasonLabels[deleteReason];
+                                deletePostMutation.mutate(
+                                    { postId: deletePostId, reason: finalReason },
+                                    {
+                                        onSuccess: () => {
+                                            // Track this post as deleted locally
+                                            if (deletePostId) {
+                                                setDeletedPostIds((prev) => {
+                                                    const next = new Set(prev);
+                                                    next.add(deletePostId);
+                                                    return next;
+                                                });
+                                            }
+                                            setShowDeleteReason(false);
+                                            setDeletePostId(null);
+                                            setDeletePostTitle("");
+                                            setDeleteReason("reason1");
+                                            setDeleteCustomReason("");
+                                            // Close any open detail/insight popups
+                                            setSelectedPost(null);
+                                            setInsightsPost(null);
+                                        },
+                                    },
+                                );
+                            }}
+                        >
+                            {deletePostMutation.isPending ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                "Submit"
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,29 +1,55 @@
 import api from "../lib/axios";
 
 // ── Types ──────────────────────────────────────────────────────────────
-export interface Post {
-    id: string;
-    title: string;
-    content: string;
-    author: string;
-    category: string;
-    status: "Published" | "Draft" | "Pending" | "Rejected";
-    createdAt: string;
-    updatedAt: string;
+
+export interface PostEngagement {
     likes: number;
     comments: number;
-    image?: string;
+    views: number;
+}
+
+export interface PostAuthorDetails {
+    name: string;
+    avatar: string;
+}
+
+export interface Post {
+    _id: string;
+    authorId: string;
+    authorDetails: PostAuthorDetails;
+    title: string;
+    description?: string;
+    thumbnail: string;
+    images?: string[];
+    type: "Regular" | "Sponsored" | "Group Buy";
+    category: string;
+    subCategory: string;
+    dealStartDate: string;
+    dealEndDate?: string;
+    onSale?: boolean;
+    saleType?: string;
+    originalPrice?: number;
+    purchasePrice?: number;
+    websiteUrl?: string;
+    datePurchased?: string;
+    engagement: PostEngagement;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface PostsPagination {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
 }
 
 export interface PostsListResponse {
     success: boolean;
-    message: string;
     data: {
         posts: Post[];
-        total: number;
-        page: number;
-        limit: number;
-        totalPages: number;
+        pagination: PostsPagination;
     };
 }
 
@@ -50,6 +76,7 @@ export const postService = {
         search?: string;
         status?: string;
         category?: string;
+        type?: string;
     }): Promise<PostsListResponse> => {
         const { data } = await api.get<PostsListResponse>("/admin/posts", {
             params,
@@ -97,9 +124,10 @@ export const postService = {
     /**
      * DELETE /admin/posts/:id — Delete a post
      */
-    deletePost: async (postId: string): Promise<ApiResponse> => {
+    deletePost: async (postId: string, reason?: string): Promise<ApiResponse> => {
         const { data } = await api.delete<ApiResponse>(
             `/admin/posts/${postId}`,
+            { data: { reason: reason || "Deleted by admin" } },
         );
         return data;
     },

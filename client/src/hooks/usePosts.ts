@@ -24,6 +24,7 @@ export function usePosts(params?: {
     search?: string;
     status?: string;
     category?: string;
+    type?: string;
 }) {
     return useQuery({
         queryKey: postKeys.list(params || {}),
@@ -54,7 +55,7 @@ export function useCreatePost() {
     return useMutation({
         mutationFn: (payload: Partial<Post>) =>
             postService.createPost(payload),
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: postKeys.all });
             toast({
                 title: "Post Created",
@@ -88,7 +89,7 @@ export function useUpdatePost() {
             postId: string;
             payload: Partial<Post>;
         }) => postService.updatePost(postId, payload),
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
             queryClient.invalidateQueries({ queryKey: postKeys.all });
             toast({
                 title: "Post Updated",
@@ -115,9 +116,42 @@ export function useDeletePost() {
     const { toast } = useToast();
 
     return useMutation({
-        mutationFn: (postId: string) => postService.deletePost(postId),
-        onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: postKeys.all });
+        mutationFn: ({ postId, reason }: { postId: string; reason?: string }) =>
+            postService.deletePost(postId, reason),
+        onSuccess: (data: any, variables) => {
+            const deletedId = variables.postId;
+
+            // Optimistically remove the deleted post from all cached post-list queries
+            // because the backend soft-deletes and the list API still returns it.
+            queryClient.setQueriesData(
+                { queryKey: postKeys.lists() },
+                (oldData: any) => {
+                    if (!oldData?.data?.posts) return oldData;
+                    const filtered = oldData.data.posts.filter(
+                        (p: any) => p._id !== deletedId,
+                    );
+                    return {
+                        ...oldData,
+                        data: {
+                            ...oldData.data,
+                            posts: filtered,
+                            pagination: oldData.data.pagination
+                                ? {
+                                      ...oldData.data.pagination,
+                                      totalPosts: Math.max(
+                                          0,
+                                          (oldData.data.pagination.totalPosts ?? filtered.length) - 1,
+                                      ),
+                                  }
+                                : undefined,
+                        },
+                    };
+                },
+            );
+
+            // Also remove any cached detail for this post
+            queryClient.removeQueries({ queryKey: postKeys.detail(deletedId) });
+
             toast({
                 title: "Post Deleted",
                 description: data.message || "Post deleted successfully.",
