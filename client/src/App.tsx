@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { initTokenRefresh } from "@/lib/tokenRefresh";
 import NotFound from "@/pages/not-found";
 
 import { DashboardScreen } from "@/pages/DashboardScreen";
@@ -76,6 +77,17 @@ function Router() {
 }
 
 function App() {
+    // Start proactive token refresh if the user is already logged in
+    // (covers page refresh / returning to the app)
+    useEffect(() => {
+        const isAuthed =
+            localStorage.getItem("auth") === "true" &&
+            !!localStorage.getItem("accessToken");
+        if (isAuthed) {
+            initTokenRefresh();
+        }
+    }, []);
+
     return (
         <QueryClientProvider client={queryClient}>
             <TooltipProvider>

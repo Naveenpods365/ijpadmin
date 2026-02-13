@@ -1,4 +1,5 @@
 import axios from "axios";
+import { scheduleRefresh, stopRefresh } from "./tokenRefresh";
 
 // ── Base Axios Instance ────────────────────────────────────────────────
 const API_BASE_URL =
@@ -99,6 +100,7 @@ api.interceptors.response.use(
 
             if (!refreshToken) {
                 // No refresh token – force logout
+                stopRefresh();
                 clearTokens();
                 window.location.href = "/login";
                 return Promise.reject(error);
@@ -117,10 +119,14 @@ api.interceptors.response.use(
                 setTokens(newAccessToken, newRefreshToken);
                 processQueue(null, newAccessToken);
 
+                // Re-schedule proactive refresh with the new token
+                scheduleRefresh();
+
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError, null);
+                stopRefresh();
                 clearTokens();
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
