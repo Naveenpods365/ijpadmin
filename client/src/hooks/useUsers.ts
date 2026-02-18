@@ -21,8 +21,7 @@ export function useUsers(params?: {
     page?: number;
     limit?: number;
     search?: string;
-    status?: string;
-    sort?: string;
+    accountType?: string;
 }) {
     return useQuery({
         queryKey: userKeys.list(params || {}),
@@ -100,12 +99,13 @@ export function useUnblockUser() {
 
 /**
  * Hook: useSearchUsers
- * GET /admin/users/search?q=...
+ * Uses listUsers with search param
  */
 export function useSearchUsers(query: string) {
     return useQuery({
         queryKey: userKeys.search(query),
-        queryFn: () => userService.searchUsers(query),
+        queryFn: () => userService.listUsers({ search: query }),
         enabled: query.trim().length > 0,
     });
 }
+

@@ -1,39 +1,61 @@
 import axios from "axios";
-import { scheduleRefresh, stopRefresh } from "./tokenRefresh";
+import { attachTokenRefreshInterceptor } from "./tokenRefresh";
 
-// ── Base Axios Instance ────────────────────────────────────────────────
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://124.123.18.19:3006/api";
+/* ================= TOKEN SERVICE ================= */
+let accessToken: string | null = null;
 
-const api = axios.create({
+export const setAccessToken = (token: string, refreshToken: string | null = null) => {
+    accessToken = token;
+    if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+    }
+};
+
+// Alias for backward compatibility
+export const setTokens = setAccessToken;
+
+export const getAccessToken = () => accessToken;
+
+export const getRefreshToken = () => localStorage.getItem("refreshToken");
+
+export const clearTokens = () => {
+    accessToken = null;
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("auth"); // Also clear auth flag if used
+    localStorage.removeItem("adminUser");
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://124.123.18.19:3006/api";
+
+export const refreshOnLoad = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) return;
+
+    try {
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
+        // The user snippet uses res.data.data.accessToken
+        // Assuming the response structure is { success: true, data: { accessToken: "...", ... } }
+        const newAccessToken = res.data.data?.accessToken || res.data.accessToken;
+        const newRefreshToken = res.data.data?.refreshToken || res.data.refreshToken;
+        
+        setAccessToken(newAccessToken, newRefreshToken);
+        return newAccessToken;
+    } catch (error) {
+        clearTokens();
+    }
+};
+
+/* ================= AXIOS INSTANCE ================= */
+const authInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 30000,
+    timeout: 10000,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-// ── Token helpers ──────────────────────────────────────────────────────
-export const getAccessToken = (): string | null =>
-    localStorage.getItem("accessToken");
-
-export const getRefreshToken = (): string | null =>
-    localStorage.getItem("refreshToken");
-
-export const setTokens = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-};
-
-export const clearTokens = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("auth");
-    localStorage.removeItem("adminUser");
-};
-
-// ── Request interceptor: attach Bearer token ───────────────────────────
-api.interceptors.request.use(
+/* ================= REQUEST INTERCEPTOR ================= */
+authInstance.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
         if (token && config.headers) {
@@ -44,99 +66,8 @@ api.interceptors.request.use(
     (error) => Promise.reject(error),
 );
 
-// ── Response interceptor: handle 401 & token refresh ───────────────────
-let isRefreshing = false;
-let failedQueue: Array<{
-    resolve: (value?: unknown) => void;
-    reject: (reason?: unknown) => void;
-}> = [];
+/* ================= RESPONSE INTERCEPTOR ================= */
+attachTokenRefreshInterceptor(authInstance, setAccessToken, clearTokens);
 
-const processQueue = (error: unknown, token: string | null = null) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-    failedQueue = [];
-};
+export default authInstance;
 
-api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
-        const requestUrl = originalRequest?.url || "";
-
-        // Skip token refresh for auth endpoints (login, register, etc.)
-        // These return 401 for invalid credentials — not expired tokens
-        const isAuthEndpoint =
-            requestUrl.includes("/auth/login") ||
-            requestUrl.includes("/auth/register") ||
-            requestUrl.includes("/auth/refresh-token");
-
-        // If 401 and not already retrying and not an auth endpoint
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !isAuthEndpoint
-        ) {
-            // If already refreshing, queue this request
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
-                        return api(originalRequest);
-                    })
-                    .catch((err) => Promise.reject(err));
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            const refreshToken = getRefreshToken();
-
-            if (!refreshToken) {
-                // No refresh token – force logout
-                stopRefresh();
-                clearTokens();
-                window.location.href = "/login";
-                return Promise.reject(error);
-            }
-
-            try {
-                const { data } = await axios.post(
-                    `${API_BASE_URL}/auth/refresh-token`,
-                    { refreshToken },
-                );
-
-                const newAccessToken = data.data?.accessToken || data.accessToken;
-                const newRefreshToken =
-                    data.data?.refreshToken || data.refreshToken || refreshToken;
-
-                setTokens(newAccessToken, newRefreshToken);
-                processQueue(null, newAccessToken);
-
-                // Re-schedule proactive refresh with the new token
-                scheduleRefresh();
-
-                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                return api(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-                stopRefresh();
-                clearTokens();
-                window.location.href = "/login";
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
-        }
-
-        return Promise.reject(error);
-    },
-);
-
-export default api;

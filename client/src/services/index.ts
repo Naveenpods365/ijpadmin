@@ -5,10 +5,11 @@ export { dashboardService } from "./dashboardService";
 
 export type { LoginPayload, LoginResponse, RegisterAdminPayload } from "./authService";
 export type {
-    User,
+    UserAccount,
     UsersListResponse,
     UserDetailResponse,
 } from "./userService";
+
 export type {
     Post,
     PostsListResponse,

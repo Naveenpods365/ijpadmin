@@ -12,8 +12,10 @@ import {
     UserMinus,
     UserX,
     X,
+    Loader2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useLocation } from "wouter";
 import { Sidebar } from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import {
@@ -22,6 +24,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUserDetail, useBlockUser } from "@/hooks/useUsers";
+import { getAvatarUrl } from "@/lib/utils";
 
 type UserProfileViewScreenProps = {
     params: {
@@ -52,12 +56,14 @@ function BlockConfirmModal({
     avatar,
     onClose,
     onConfirm,
+    isPending,
 }: {
     open: boolean;
     name: string;
     avatar: string;
     onClose: () => void;
     onConfirm: () => void;
+    isPending: boolean;
 }) {
     useEffect(() => {
         if (!open) return;
@@ -135,20 +141,19 @@ function BlockConfirmModal({
                                     <div className="mt-6 flex items-center justify-center gap-6">
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                onConfirm();
-                                                onClose();
-                                            }}
-                                            className="h-9 w-[120px] rounded-[8px] bg-[#62a230] text-white text-[12px] font-semibold [font-family:'Poppins',Helvetica]"
+                                            onClick={onConfirm}
+                                            disabled={isPending}
+                                            className="h-9 w-[120px] rounded-[8px] bg-[#ef4444] text-white text-[12px] font-semibold [font-family:'Poppins',Helvetica] flex items-center justify-center disabled:opacity-50"
                                         >
-                                            Yes
+                                            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Block"}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={onClose}
+                                            disabled={isPending}
                                             className="h-9 w-[120px] rounded-[8px] bg-[#f3f4f6] text-[#111827] text-[12px] font-semibold [font-family:'Poppins',Helvetica]"
                                         >
-                                            No
+                                            Cancel
                                         </button>
                                     </div>
                                 </div>
@@ -293,137 +298,42 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
         null | "followers" | "following"
     >(null);
     const [blockModalOpen, setBlockModalOpen] = useState(false);
+    const [, setLocation] = useLocation();
+
+    // Fetch user details
+    const { data: userData, isLoading, isError } = useUserDetail(params.id);
+    const blockMutation = useBlockUser();
+
+    // Redirect if invalid ID or go back if error (optional logic, kept simple)
+    if (isError) {
+        // Maybe show error UI or redirect
+        // For now let's just show minimal error in main content
+    }
+
+    const user = userData?.data;
 
     const profileName = useMemo(() => {
-        const id = params?.id ?? "";
-        if (!id) return "Siti Arlina";
-        const n = id.replace(/^u-/, "").replace(/[-_]/g, " ").trim();
-        const asNum = Number(n);
-        if (!Number.isNaN(asNum) && asNum > 0) return "Siti Arlina";
-        return n
-            ? n
-                  .split(" ")
-                  .filter(Boolean)
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                  .join(" ")
-            : "Siti Arlina";
-    }, [params?.id]);
+        if (!user) return "Loading...";
+        if (user.businessName) return user.businessName;
+        if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+        return user.firstName || user.username || user.email;
+    }, [user]);
 
     const profileStats = useMemo(
         () => ({
-            followers: "1.2M",
-            following: "124",
-            positive: "12%",
-            posts: "326",
+            followers: "0", // Not in API yet
+            following: "0", // Not in API yet
+            positive: user?.rating ? `${user.rating * 20}%` : "0%", // Example conversion if rating is 0-5
+            posts: "0", // Not in API yet
         }),
-        [],
+        [user],
     );
 
-    const followersRows = useMemo<FollowRow[]>(
-        () => [
-            {
-                id: "f-1",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-2",
-                name: "Annuska roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-3",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-4",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-            {
-                id: "f-5",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-6",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-7",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-            {
-                id: "f-8",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: false,
-            },
-        ],
-        [],
-    );
+    // Mocks for now as API doesn't return followers/following
+    const followersRows = useMemo<FollowRow[]>(() => [], []);
+    const followingRows = useMemo<FollowRow[]>(() => [], []);
 
-    const followingRows = useMemo<FollowRow[]>(
-        () => [
-            {
-                id: "fg-1",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-            {
-                id: "fg-2",
-                name: "Annuska roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-            {
-                id: "fg-3",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-            {
-                id: "fg-4",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-            {
-                id: "fg-5",
-                name: "Devine roy",
-                username: "roy600",
-                avatar: "/figmaAssets/2-jpg.png",
-                isFollowing: true,
-            },
-        ],
-        [],
-    );
-
-    const aboutText =
-        "Lorem ipsum dolor sit amet consectetur. Fames nunc metus eget quisque. Vestibulum nulla tincidunt nibh tincidunt nibh facilisi odio tristique scelerisque. Placerat et scelerisque sapien pulvinar ut. Tristique auctor ornare aliquam eu in amet ultricies nisl scelerisque. Ac in et ultricies aliquam velit ut volutpat.";
+    const aboutText = user?.about || "No bio provided.";
 
     const visibleImages = useMemo(() => {
         if (tab === "sponsored") return galleryImages.slice(0, 3);
@@ -431,7 +341,38 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
         return galleryImages;
     }, [tab]);
 
-    const avatarSrc = "/figmaAssets/ellipse-11.svg";
+    const avatarSrc = getAvatarUrl(user?.avatarKey);
+
+    const displayLocation = user?.registeredAddress || (user?.zipCode ? `${user.zipCode}, USA` : "Location not set");
+    const displayPhone = user?.mobileNumber || "Not provided";
+    const displayEmail = user?.email || "Not provided";
+
+    const categoryTag = useMemo(() => {
+        if (user?.accountType === "VENDOR" && user.businessType) {
+            return user.businessType;
+        }
+        if (user?.interests && user.interests.length > 0) {
+            return user.interests[0];
+        }
+        if (user?.accountType) return user.accountType;
+        return "User";
+    }, [user]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#f3f5f6] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#62a230]" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+             <div className="min-h-screen bg-[#f3f5f6] flex items-center justify-center text-[#7b848f]">
+                User not found
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#f3f5f6]">
@@ -441,8 +382,14 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                 avatar={avatarSrc}
                 onClose={() => setBlockModalOpen(false)}
                 onConfirm={() => {
-                    return;
+                    blockMutation.mutate(user._id, {
+                        onSuccess: () => {
+                            setBlockModalOpen(false);
+                            // Maybe redirect or refetch
+                        }
+                    });
                 }}
+                isPending={blockMutation.isPending}
             />
             <FollowListDrawer
                 open={followDrawer === "followers"}
@@ -476,7 +423,7 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                         <div className="relative px-6 pb-6 pt-4 z-10 ">
                             <div className="absolute left-6 top-22 mt-[-92px] h-[154px] w-[154px] rounded-full overflow-hidden border-4 border-white shadow-lg bg-white z-30">
                                 <img
-                                    src="/figmaAssets/ellipse-11.svg"
+                                    src={avatarSrc}
                                     alt={profileName}
                                     className="h-full w-full object-cover"
                                 />
@@ -489,7 +436,7 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                                     </div>
                                     <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-[#eaf1ff] px-3 py-1 text-[11px] text-[#2563eb] [font-family:'Poppins',Helvetica]">
                                         <Monitor className="h-3 w-3" />
-                                        Smart Tv
+                                        {categoryTag}
                                     </div>
                                 </div>
 
@@ -621,7 +568,7 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                                     <Star className="h-4 w-4 fill-[#f97316]" />
                                     <StarHalf className="h-4 w-4 fill-[#f97316]" />
                                     <span className="ml-2 text-[12px] text-[#7b848f] [font-family:'Poppins',Helvetica]">
-                                        4.5
+                                        {user?.rating ? user.rating : "0.0"}
                                     </span>
                                 </div>
 
@@ -635,12 +582,12 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                                 <div className="pt-2">
                                     <div className="flex items-center justify-between text-[11px] text-[#7b848f] [font-family:'Poppins',Helvetica]">
                                         <span>Profile Completion</span>
-                                        <span>60 %</span>
+                                        <span>50 %</span>
                                     </div>
                                     <div className="mt-2 h-2 rounded-full bg-[#eef2f6] overflow-hidden">
                                         <div
                                             className="h-full rounded-full bg-[#4f8ef9]"
-                                            style={{ width: "60%" }}
+                                            style={{ width: "50%" }}
                                         />
                                     </div>
                                 </div>
@@ -654,19 +601,19 @@ export function UserProfileViewScreen({ params }: UserProfileViewScreenProps) {
                                             <span className="h-9 w-9 rounded-full bg-white flex items-center justify-center">
                                                 <Phone className="h-4 w-4 text-[#62a230]" />
                                             </span>
-                                            +108 9846XXX5052
+                                            {displayPhone}
                                         </div>
                                         <div className="flex items-center gap-3 text-[12px] text-[#7b848f] [font-family:'Poppins',Helvetica]">
                                             <span className="h-9 w-9 rounded-full bg-white flex items-center justify-center">
                                                 <Mail className="h-4 w-4 text-[#62a230]" />
                                             </span>
-                                            Abcd@gmail.com
+                                            {displayEmail}
                                         </div>
                                         <div className="flex items-center gap-3 text-[12px] text-[#7b848f] [font-family:'Poppins',Helvetica]">
                                             <span className="h-9 w-9 rounded-full bg-white flex items-center justify-center">
                                                 <MapPin className="h-4 w-4 text-[#62a230]" />
                                             </span>
-                                            Alabama, USA ,14060
+                                            {displayLocation}
                                         </div>
                                     </div>
                                 </div>

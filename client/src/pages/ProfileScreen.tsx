@@ -45,7 +45,7 @@ const notificationItems = [
 ] as const;
 
 export function ProfileScreen() {
-    const [activeTab, setActiveTab] = useState(profileTabs[0].label);
+    const [activeTab, setActiveTab] = useState<string>(profileTabs[0].label);
     const [firstName, setFirstName] = useState("Rupali");
     const [lastName, setLastName] = useState("Nandiya");
     const [email, setEmail] = useState("RupaliNandiya@gmail.com");

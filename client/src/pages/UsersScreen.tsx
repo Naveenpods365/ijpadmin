@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
     Bell,
     ChevronDown,
+    Loader2,
     MoreHorizontal,
     Search,
     Settings,
@@ -25,6 +27,9 @@ import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { userService } from "@/services/userService";
+import { format } from "date-fns";
+import { getAvatarUrl } from "@/lib/utils";
 
 const statCards = [
     {
@@ -79,7 +84,8 @@ const activityData = [
     { day: "13 Oct", value: 140 },
     { day: "14 Oct", value: 95 },
     { day: "15 Oct", value: 100 },
-] as const;
+];
+
 
 const alerts = [
     {
@@ -110,43 +116,17 @@ const filterTabs = [
     "Blocked users",
 ] as const;
 
-type UserRow = {
-    id: string;
-    name: string;
-    phone: string;
-    city: string;
-    registered: string;
-    activity: "High" | "Medium" | "Low";
-    reports: string;
-    status: "Active" | "Inactive" | "Suspended";
-    profile: number;
-};
-
-const usersSeed: UserRow[] = Array.from({ length: 9 }).map((_, idx) => ({
-    id: `u-${idx + 1}`,
-    name: "John Doe",
-    phone: "+10895XXXXX550",
-    city: "New York, USA,140050",
-    registered: "12 - 17 oct, 2025",
-    activity: idx % 3 === 0 ? "High" : idx % 3 === 1 ? "Medium" : "Low",
-    reports: idx % 4 === 0 ? "2 reports" : "None",
-    status: idx % 5 === 2 ? "Suspended" : idx % 2 === 0 ? "Active" : "Inactive",
-    profile: idx % 2 === 0 ? 60 : 20,
-}));
-
-const activityStyles: Record<
-    UserRow["activity"],
-    { bg: string; text: string }
-> = {
+const activityStyles: Record<string, { bg: string; text: string }> = {
     High: { bg: "bg-[#e9f7ef]", text: "text-[#16a249]" },
     Medium: { bg: "bg-[#fff4e5]", text: "text-[#f59f0a]" },
     Low: { bg: "bg-[#f3f4f6]", text: "text-[#6b7280]" },
 };
 
-const statusStyles: Record<UserRow["status"], { bg: string; text: string }> = {
-    Active: { bg: "bg-[#eaf7ef]", text: "text-[#16a249]" },
-    Inactive: { bg: "bg-[#f3f4f6]", text: "text-[#6b7280]" },
-    Suspended: { bg: "bg-[#fee2e2]", text: "text-[#ef4444]" },
+const statusStyles: Record<string, { bg: string; text: string }> = {
+    ACTIVE: { bg: "bg-[#eaf7ef]", text: "text-[#16a249]" },
+    INACTIVE: { bg: "bg-[#f3f4f6]", text: "text-[#6b7280]" },
+    SUSPENDED: { bg: "bg-[#fee2e2]", text: "text-[#ef4444]" },
+    BLOCKED: { bg: "bg-[#fee2e2]", text: "text-[#ef4444]" },
 };
 
 const alertTone = {
@@ -181,27 +161,44 @@ export function UsersScreen() {
     const [search, setSearch] = useState("");
     const [activeTab, setActiveTab] =
         useState<(typeof filterTabs)[number]>("All User");
-    const [page, setPage] = useState(2);
+    const [page, setPage] = useState(1);
     const [, setLocation] = useLocation();
 
+    // Map active tab to query params
+    const queryParams = useMemo(() => {
+        const params: any = { page, limit: 10 };
+        if (search) params.search = search;
+        
+        if (activeTab === "Only Users") params.accountType = "USER";
+        if (activeTab === "Vendors") params.accountType = "VENDOR";
+        // Note: The API currently only supports accountType. 
+        // For "Suspended" and "Blocked users", we might need backend support or client-side filtering.
+        // Given the request, we'll focus on accountType for now.
+        
+        return params;
+    }, [page, search, activeTab]);
+
+    const { data, isLoading } = useQuery({
+        queryKey: ["users", queryParams],
+        queryFn: () => userService.listUsers(queryParams),
+    });
+
     const users = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        return usersSeed.filter((row) => {
-            const matchesSearch =
-                row.name.toLowerCase().includes(q) ||
-                row.phone.toLowerCase().includes(q) ||
-                row.city.toLowerCase().includes(q);
+        if (!data?.data?.accounts) return [];
+        let filtered = data.data.accounts;
 
-            const matchesTab =
-                activeTab === "All User" ||
-                (activeTab === "Only Users" && row.status !== "Suspended") ||
-                (activeTab === "Vendors" && row.status !== "Suspended") ||
-                (activeTab === "Suspended" && row.status === "Suspended") ||
-                (activeTab === "Blocked users" && row.status === "Suspended");
+        // Client-side filtering for status if needed, as per UI tabs
+        if (activeTab === "Suspended") {
+            filtered = filtered.filter(u => u.accountStatus === "SUSPENDED");
+        }
+        if (activeTab === "Blocked users") {
+            filtered = filtered.filter(u => u.isBlocked);
+        }
 
-            return matchesSearch && matchesTab;
-        });
-    }, [search, activeTab]);
+        return filtered;
+    }, [data, activeTab]);
+
+    const pagination = data?.data?.pagination;
 
     return (
         <div className="min-h-screen bg-[#f3f5f6]">
@@ -451,9 +448,10 @@ export function UsersScreen() {
                                             <button
                                                 key={tab}
                                                 type="button"
-                                                onClick={() =>
-                                                    setActiveTab(tab)
-                                                }
+                                                onClick={() => {
+                                                    setActiveTab(tab);
+                                                    setPage(1);
+                                                }}
                                                 className={`h-8 px-4 rounded-[6px] text-[11px] font-medium ${
                                                     isActive
                                                         ? "bg-[#62a230] text-white"
@@ -480,7 +478,7 @@ export function UsersScreen() {
                         </div>
 
                         <div className="px-2 pb-3">
-                            <div className="rounded-[12px] border border-[#edf1f3] overflow-hidden">
+                            <div className="rounded-[12px] border border-[#edf1f3] overflow-hidden min-h-[400px]">
                                 <table className="w-full text-[11px]">
                                     <thead className="bg-[#f6f7f9]">
                                         <tr className="text-[#9aa3af]">
@@ -514,149 +512,233 @@ export function UsersScreen() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {users.map((user) => {
-                                            const activity =
-                                                activityStyles[user.activity];
-                                            const status =
-                                                statusStyles[user.status];
-                                            return (
-                                                <tr
-                                                    key={user.id}
-                                                    className="border-b border-[#f0f2f4] cursor-pointer hover:bg-[#f6f8fa]"
-                                                    onClick={() => {
-                                                        setLocation(
-                                                            `/users/${user.id}`,
-                                                        );
-                                                    }}
-                                                >
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#f6f8fa] border border-[#edf1f3]">
-                                                                <img
-                                                                    src="/figmaAssets/ellipse-11.svg"
-                                                                    alt="avatar"
-                                                                    className="w-full h-full object-cover"
-                                                                />
+                                        {isLoading ? (
+                                             <tr>
+                                                <td colSpan={9} className="h-40 text-center text-[#7b848f]">
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <Loader2 className="h-6 w-6 animate-spin text-[#62a230]" />
+                                                        <span>Loading users...</span>
+                                                    </div>
+                                                </td>
+                                             </tr>
+                                        ) : users.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={9} className="h-40 text-center text-[#7b848f]">
+                                                    No users found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            users.map((user) => {
+                                                const activity = user.isActive ? activityStyles.High : activityStyles.Low;
+                                                const statusKey = user.isBlocked ? "BLOCKED" : (user.accountStatus || "ACTIVE");
+                                                const status = statusStyles[statusKey] || statusStyles.ACTIVE;
+                                                
+                                                // Derive display name
+                                                const displayName = user.businessName || 
+                                                    (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName) || 
+                                                    user.username || 
+                                                    user.email;
+                                                
+                                                // Derive display location
+                                                const location = user.zipCode || user.registeredAddress || "-";
+
+                                                // Derive registration date
+                                                const regDate = user.createdAt ? format(new Date(user.createdAt), "dd MMM, yyyy") : "-";
+
+                                                // Mock profile completion if not available
+                                                const profileCompletion = 50; // default for now
+
+                                                return (
+                                                    <tr
+                                                        key={user._id}
+                                                        className="border-b border-[#f0f2f4] cursor-pointer hover:bg-[#f6f8fa]"
+                                                        onClick={() => {
+                                                            setLocation(
+                                                                `/users/${user._id}`,
+                                                            );
+                                                        }}
+                                                    >
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-[#f6f8fa] border border-[#edf1f3]">
+                                                                    <img
+                                                                        src={getAvatarUrl(user.avatarKey)}
+                                                                        alt="avatar"
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[11px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
+                                                                        {displayName}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-[#7b848f]">
+                                                                        {user.email}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-[11px] font-semibold text-[#222f36] [font-family:'Poppins',Helvetica]">
-                                                                {user.name}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-[#7b848f]">
-                                                        {user.phone}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-[#7b848f]">
-                                                        {user.city}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-[#7b848f]">
-                                                        {user.registered}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <span
-                                                            className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${activity.bg} ${activity.text}`}
-                                                        >
-                                                            {user.activity}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <span
-                                                            className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${
-                                                                user.reports ===
-                                                                "None"
-                                                                    ? "bg-[#f3f4f6] text-[#9aa3af]"
-                                                                    : "bg-[#fee2e2] text-[#ef4444]"
-                                                            }`}
-                                                        >
-                                                            {user.reports}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <span
-                                                            className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${status.bg} ${status.text}`}
-                                                        >
-                                                            {user.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex-1 h-2 rounded-full bg-[#eef2f6] overflow-hidden">
-                                                                <div
-                                                                    className={`h-full rounded-full ${
-                                                                        user.profile >
-                                                                        40
-                                                                            ? "bg-[#4f8ef9]"
-                                                                            : "bg-[#fb923c]"
-                                                                    }`}
-                                                                    style={{
-                                                                        width: `${user.profile}%`,
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                            <span className="text-[10px] text-[#7b848f]">
-                                                                {user.profile} %
+                                                        </td>
+                                                        <td className="px-4 py-3 text-[#7b848f]">
+                                                            {user.mobileNumber || "-"}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-[#7b848f]">
+                                                            {location}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-[#7b848f]">
+                                                            {regDate}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span
+                                                                className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${activity.bg} ${activity.text}`}
+                                                            >
+                                                                {user.isActive ? "Active" : "Inactive"}
                                                             </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(event) =>
-                                                                event.stopPropagation()
-                                                            }
-                                                            className="h-8 w-8 rounded-[6px] border border-transparent hover:bg-[#f6f8fa] inline-flex items-center justify-center"
-                                                        >
-                                                            <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span
+                                                                className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium bg-[#f3f4f6] text-[#9aa3af]`}
+                                                            >
+                                                                None
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span
+                                                                className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${status.bg} ${status.text}`}
+                                                            >
+                                                                {user.isBlocked ? "Blocked" : (user.accountStatus || "Active")}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex-1 h-2 rounded-full bg-[#eef2f6] overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full ${
+                                                                            profileCompletion > 40
+                                                                                ? "bg-[#4f8ef9]"
+                                                                                : "bg-[#fb923c]"
+                                                                        }`}
+                                                                        style={{
+                                                                            width: `${profileCompletion}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <span className="text-[10px] text-[#7b848f]">
+                                                                    {profileCompletion} %
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(event) =>
+                                                                    event.stopPropagation()
+                                                                }
+                                                                className="h-8 w-8 rounded-[6px] border border-transparent hover:bg-[#f6f8fa] inline-flex items-center justify-center"
+                                                            >
+                                                                <MoreHorizontal className="h-4 w-4 text-[#7b848f]" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div className="px-4 py-4 flex items-center justify-between text-[11px] text-[#7b848f]">
-                                <div>Showing 1 to 100 list in 1 page</div>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setPage(Math.max(1, page - 1))
-                                        }
-                                        className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
-                                    >
-                                        <span className="text-[#7b848f]">
-                                            ‹
-                                        </span>
-                                    </button>
-                                    {[1, 2, 3, 4, 5].map((p) => (
+                            {pagination && (
+                                <div className="px-4 py-4 flex items-center justify-between text-[11px] text-[#7b848f]">
+                                    <div>
+                                        Showing {Math.min((page - 1) * pagination.limit + 1, pagination.total)} to {Math.min(page * pagination.limit, pagination.total)} of {pagination.total} entries
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <button
-                                            key={p}
                                             type="button"
-                                            onClick={() => setPage(p)}
-                                            className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                                                page === p
-                                                    ? "bg-[#62a230] text-white"
-                                                    : "text-[#7b848f]"
-                                            }`}
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className={`h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center hover:bg-[#eef2f6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
                                         >
-                                            {String(p).padStart(2, "0")}
+                                            <span className="text-[#7b848f] text-lg leading-none mb-1">
+                                                ‹
+                                            </span>
                                         </button>
-                                    ))}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setPage(Math.min(5, page + 1))
-                                        }
-                                        className="h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center"
-                                    >
-                                        <span className="text-[#7b848f]">
-                                            ›
-                                        </span>
-                                    </button>
+                                        
+                                        {(() => {
+                                            const totalPages = pagination.pages;
+                                            const visiblePages = 5;
+                                            const pages: (number | "...")[] = [];
+                                            
+                                            if (totalPages <= visiblePages + 2) {
+                                                // Show all pages if total is small
+                                                for (let i = 1; i <= totalPages; i++) {
+                                                    pages.push(i);
+                                                }
+                                            } else {
+                                                // Always show first page
+                                                pages.push(1);
+                                                
+                                                let start = Math.max(2, page - 1);
+                                                let end = Math.min(totalPages - 1, page + 1);
+                                                
+                                                // Adjust window if close to boundaries
+                                                if (page <= 3) {
+                                                    end = 4;
+                                                }
+                                                if (page >= totalPages - 2) {
+                                                    start = totalPages - 3;
+                                                }
+
+                                                if (start > 2) {
+                                                    pages.push("...");
+                                                }
+                                                
+                                                for (let i = start; i <= end; i++) {
+                                                    pages.push(i);
+                                                }
+                                                
+                                                if (end < totalPages - 1) {
+                                                    pages.push("...");
+                                                }
+                                                
+                                                // Always show last page
+                                                pages.push(totalPages);
+                                            }
+
+                                            return pages.map((p, idx) => {
+                                                if (p === "...") {
+                                                    return (
+                                                        <span key={`ellipsis-${idx}`} className="text-[#7b848f] px-1">...</span>
+                                                    );
+                                                }
+                                                return (
+                                                    <button
+                                                        key={p}
+                                                        type="button"
+                                                        onClick={() => setPage(p as number)}
+                                                        className={`h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-medium transition-colors ${
+                                                            page === p
+                                                                ? "bg-[#62a230] text-white shadow-sm"
+                                                                : "bg-white text-[#7b848f] hover:bg-[#f6f8fa] border border-transparent hover:border-[#edf1f3]"
+                                                        }`}
+                                                    >
+                                                        {String(p).padStart(2, "0")}
+                                                    </button>
+                                                );
+                                            });
+                                        })()}
+                                        
+                                        <button
+                                            type="button"
+                                            onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                                            disabled={page === pagination.pages}
+                                            className={`h-8 w-8 rounded-full bg-[#f6f8fa] flex items-center justify-center hover:bg-[#eef2f6] disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+                                        >
+                                            <span className="text-[#7b848f] text-lg leading-none mb-1">
+                                                ›
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </Card>
                 </div>

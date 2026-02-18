@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { initTokenRefresh } from "@/lib/tokenRefresh";
+import { refreshOnLoad } from "@/lib/axios";
 import NotFound from "@/pages/not-found";
 
 import { DashboardScreen } from "@/pages/DashboardScreen";
@@ -28,7 +28,7 @@ function Router() {
     const [location, setLocation] = useLocation();
     const isAuthed =
         localStorage.getItem("auth") === "true" &&
-        !!localStorage.getItem("accessToken");
+        !!localStorage.getItem("refreshToken");
 
     useEffect(() => {
         if (!isAuthed && location !== "/login") {
@@ -82,9 +82,9 @@ function App() {
     useEffect(() => {
         const isAuthed =
             localStorage.getItem("auth") === "true" &&
-            !!localStorage.getItem("accessToken");
+            !!localStorage.getItem("refreshToken"); // Check refresh token now
         if (isAuthed) {
-            initTokenRefresh();
+            refreshOnLoad();
         }
     }, []);
 
@@ -99,3 +99,4 @@ function App() {
 }
 
 export default App;
+

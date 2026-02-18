@@ -1,5 +1,4 @@
 import api, { setTokens, clearTokens } from "../lib/axios";
-import { initTokenRefresh, destroyTokenRefresh } from "../lib/tokenRefresh";
 
 // ── Types ──────────────────────────────────────────────────────────────
 export interface LoginPayload {
@@ -57,9 +56,6 @@ export const authService = {
                     JSON.stringify(data.data.admin),
                 );
             }
-
-            // Start proactive token refresh to prevent auto-logout
-            initTokenRefresh();
         }
 
         return data;
@@ -82,8 +78,8 @@ export const authService = {
      * Logout – clear all tokens and auth state
      */
     logout: () => {
-        destroyTokenRefresh();
         clearTokens();
         window.location.href = "/login";
     },
 };
+

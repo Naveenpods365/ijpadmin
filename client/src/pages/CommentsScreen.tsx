@@ -29,7 +29,7 @@ const sentimentData = [
     { week: "Week 4", positive: 78, neutral: 18, negative: 8 },
     { week: "Week 5", positive: 80, neutral: 17, negative: 7 },
     { week: "Week 6", positive: 82, neutral: 16, negative: 6 },
-] as const;
+];
 
 const topics = [
     { label: "Build Quality", mentions: 156, percent: 92, color: "#5ba82c" },
